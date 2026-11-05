@@ -50,6 +50,20 @@ test('全部页可达，序号连续，最后一页及错误页码提示正确',
   for (const page of [0, -1, 1.5, NaN, 10]) assert.match(renderMixRecipePage(recipes, page), /页码无效/)
 })
 
+test('丹方按真实物品 buff_type 筛选修为和突破，仍保留全局序号', () => {
+  const { GameData } = require(resolve(root, 'lib/data'))
+  const { renderMixRecipePage: render } = require(resolve(root, 'lib/mix-recipe-list'))
+  const data = new GameData(), recipes = Object.entries(data.getItemsByType(['合成丹药'])).map(([id, info]: any) => recipe(+id, { elixirName: info.name }))
+  for (const [query, type] of [['修为', 'exp_up'], ['突破', 'level_up_big']]) {
+    const expected = recipes.map((r: any, index: number) => ({ r, index })).filter(({ r }: any) => data.getItem(r.elixirId).buff_type === type)
+    assert.ok(expected.length)
+    const text = render(recipes, 1, query, false, data)
+    for (const { r, index } of expected.slice(0, 5)) assert.ok(text.includes(`${index + 1}、${r.elixirName}`))
+    assert.ok(text.includes(`共 ${expected.length} 种丹药`))
+  }
+  assert.match(render(recipes, 1, '恢复', false, data), /没有恢复类合成配方/)
+})
+
 test('生成器自身完成去重，并校验重复角色的总库存', () => {
   const main = { name: '热药', 主药: { type: 2, power: 10, h_a_c: { type: 1, power: 1 } }, 辅药: { type: 3, power: 10 } }
   const cold = { name: '寒药', 药引: { h_a_c: { type: -1, power: 1 } }, 辅药: { type: 3, power: 10 } }

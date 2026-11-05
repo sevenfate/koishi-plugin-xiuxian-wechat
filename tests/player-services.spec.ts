@@ -180,7 +180,7 @@ test('不绑定方案批量炼制不会自动用绑定库存，成功产物可�
     await f.srv.sendBack('giver', 3101, '主药', '药材', 2)
     await f.srv.sendBack('giver', 3102, '药引', '药材', 10)
     const safe = { ...recipe, materialPolicy: 'unbound' }
-    assert.match(await craftBatch(f.app, f.srv, 'giver', safe, 2, () => false), /未绑定药材不足/)
+    assert.match(await craftBatch(f.app, f.srv, 'giver', safe, 2, () => false), /未绑定药材不足：[\s\S]*需要4个，现有10个（绑定8、未绑定2）[\s\S]*最多可炼1炉/)
     assert.equal(await f.count('giver', 3101), 10)
     assert.match(await craftBatch(f.app, f.srv, 'giver', safe, 1, () => false), /丹成/)
     assert.equal((await f.srv.getBackItem('giver', 3101)).bindNum, 8)
@@ -191,6 +191,31 @@ test('不绑定方案批量炼制不会自动用绑定库存，成功产物可�
     assert.equal(await f.count('giver', 3101), 8)
     assert.match(await craftBatch(f.app, f.srv, 'giver', { ...recipe, materialPolicy: 'any' }, 1, () => false), /本批丹药绑定/)
     assert.equal((await f.srv.getBackItem('giver', 1101)).bindNum, 1)
+  } finally { await f.app.stop() }
+})
+
+test('背包按分类、名称和编号直接查数量，丹药含两种类别，查询不改背包和绑定数', async () => {
+  const f = await fixture()
+  try {
+    await f.srv.sendBack('giver', 3101, f.srv.data.getItem(3101).name, '药材', 8, 1)
+    await f.srv.sendBack('giver', 3101, f.srv.data.getItem(3101).name, '药材', 2)
+    await f.srv.sendBack('giver', 3102, f.srv.data.getItem(3102).name, '药材', 3, 1)
+    await f.srv.sendBack('giver', 1101, f.srv.data.getItem(1101).name, '丹药', 2)
+    await f.srv.sendBack('giver', 1401, f.srv.data.getItem(1401).name, '合成丹药', 3)
+    const before = await f.srv.getBack('giver')
+    const name = f.srv.data.getItem(3101).name
+    for (const cmd of [`我的背包 ${name}`, '我的背包 3101', `我的药材 ${name}`, '我的物品 药材 3101']) {
+      const text = await f.run(cmd)
+      assert.match(text, /共1种/); assert.match(text, /x10（绑定8，可交易2）/)
+      assert.doesNotMatch(text, /编号3102|编号1101/)
+    }
+    assert.match(await f.run('我的背包 不绑定 药材'), /共1种/)
+    assert.match(await f.run('我的药材'), /共2种/)
+    const pills = await f.run('我的丹药')
+    assert.match(pills, /共2种/); assert.match(pills, /编号1101/); assert.match(pills, /编号1401/)
+    assert.doesNotMatch(pills, /编号3101/)
+    assert.match(await f.run('我的背包 不存在的物品'), /没有符合条件/)
+    assert.deepEqual(await f.srv.getBack('giver'), before)
   } finally { await f.app.stop() }
 })
 

@@ -52,6 +52,7 @@ async function fixture(prefix = '') {
     scope.command('xiuxian/引用查询').action(() => [h.quote('original'), h.text(long)])
     scope.command('xiuxian/炼丹 [page:integer]').action((_, page = 1) => state.recipes.length
       ? require(resolve(root, 'lib/mix-recipe-list')).renderMixRecipePage(state.recipes, page) : `配方页${page}`)
+    scope.command('xiuxian/炼制 <num:integer> [quantity:integer]').action((_, num, quantity = 1) => `配方${num}炼制${quantity}炉`)
     ctx.command('其他长文').action(() => long)
     display = applyReplyDisplay(scope, { longTextToImage: true, longTextLineThreshold: 20 }, { now: () => state.now })
   })
@@ -154,12 +155,17 @@ test('渲染失败回退完整分页文字，不丢内容、不影响其他插�
   } finally { await f.app.stop() }
 })
 
-test('无空格炼丹页码保留前缀约束，不误改普通聊天', async () => {
+test('无空格炼丹、炼制保留前缀和群约束，不误改普通聊天', async () => {
   const f = await fixture('!')
   try {
     assert.equal(await f.run('!炼丹2'), '配方页2')
     assert.equal(await f.run('炼丹2'), '')
     assert.equal(await f.run('!炼丹2今天'), '')
     assert.equal(await f.run('!炼丹 3'), '配方页3')
+    assert.equal(await f.run('!炼制1'), '配方1炼制1炉')
+    assert.equal(await f.run('!炼制41 10'), '配方41炼制10炉')
+    assert.equal(await f.run('炼制41 10'), '')
+    assert.equal(await f.run('!炼制1今天'), '')
+    assert.equal(await f.run('!炼制1', 'blocked'), '')
   } finally { await f.app.stop() }
 })

@@ -129,9 +129,10 @@ export function applyReplyDisplay(ctx: any, config: any, options: { now?: () => 
     if (typeof content !== 'string') return next()
     const prefix = prefixes.find((p: string) => content.startsWith(p))
     if (prefix === undefined && !session.stripped.appel) return next()
-    const body = content.slice((prefix || '').length), match = body.match(/^(\/?)(炼丹|修仙翻页)(\d+)\s*$/)
+    const body = content.slice((prefix || '').length), match = body.match(/^(\/?)(炼丹|修仙翻页|炼制)(\d+)(\s+\d+)?\s*$/)
+    if (match?.[4] && match[2] !== '炼制') return next()
     const command = match && ctx.$commander.get(match[2], session)
-    if (command && gameCommand(command) && command.ctx.filter(session)) session.stripped.content = (prefix || '') + match[1] + match[2] + ' ' + match[3]
+    if (command && gameCommand(command) && command.ctx.filter(session)) session.stripped.content = (prefix || '') + match[1] + match[2] + ' ' + match[3] + (match[4] || '')
     return next()
   }, true)
   return { format, records }

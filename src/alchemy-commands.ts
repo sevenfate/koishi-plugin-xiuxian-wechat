@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
 import type { MixRecipe, YaocaiEntry } from '../lib/mix-elixir-util'
-import { renderMixRecipePage } from './mix-recipe-list'
+import { recipeInventory, renderMixRecipePage } from './mix-recipe-list'
 import { createRecipeScanner } from './mix-recipe-scanner'
 import { craftBatch } from './alchemy'
 import type { InventoryHerb } from './mix-recipe-search'
@@ -19,6 +19,8 @@ export function applyAlchemy(ctx: any, _config: any, options: { scan?: (herbs: Y
   ctx.command('xiuxian/炼丹帮助', '炼丹系统帮助').action(() => [
     '炼丹：扫描背包；炼丹 2：下一页；炼丹 丹药名：直接查找，不用逐页翻。',
     '炼丹 不绑定：只看未绑定材料方案；也支持【炼丹 不绑定 丹药名】。每种丹药分别推荐不绑定和混合材料方案。',
+    '炼丹 修为 / 突破 / 恢复：按用途筛选；炼丹材料 序号：查每炉用量、绑定/未绑定库存和当前可炼炉数。',
+    '我的丹药 / 我的药材：只查对应背包；我的背包 七彩月兰：直接查数量，支持【我的背包 不绑定 药材】。',
     '炼制 序号 [炉数]：每批1～100炉，例如【炼制 1 10】。需有炼丹炉。',
     '配方保留10分钟，翻页不重新扫描；背包变化后发送【炼丹】刷新。炼丹配方帮助：查看冷热规则。',
   ].join('\n'))
@@ -38,12 +40,24 @@ export function applyAlchemy(ctx: any, _config: any, options: { scan?: (herbs: Y
       if (tokens[0] === '不绑定' || tokens[0] === '全部') unbound = tokens.shift() === '不绑定'
       const view = !tokens.length && String(input).trim() && /^\d+$/.test(String(input).trim())
         ? previous?.view || { query: '', unbound: false } : { query: tokens.join(' '), unbound }
-      const render = (entry: Cache) => { entry.view = view; return renderMixRecipePage(entry.recipes, page, view.query, view.unbound) }
-      if (page > 1 && previous?.character === character && previous.recipes.length) return render(previous)
+      const render = (entry: Cache, backs: any[]) => {
+        entry.view = view
+        const recipes = entry.recipes.map(r => ({ ...r, maxBatches: recipeInventory(r, backs).maxBatches }))
+        return renderMixRecipePage(recipes, page, view.query, view.unbound, srv.data)
+      }
       const backs = await srv.getBack(s.userId)
+      // 没有合成配方与材料不足分别说明，不把普通丹药误报成可炼配方缺失。
+      if (view.query && !['修为', '突破', '恢复'].includes(view.query)) {
+        const found = /^\d+$/.test(view.query) ? [[view.query, srv.data.getItem(Number(view.query))]] : srv.data.findItemsByName?.(view.query) || []
+        const pills = found.filter(([, info]: any) => info && ['丹药', '合成丹药'].includes(info.item_type))
+        if (pills.length && pills.every(([, info]: any) => !info.elixir_config)) {
+          return `【${pills.map(([, info]: any) => info.name).join('、')}】当前没有合成配方，无法通过炼丹获得。\n可通过【查看修仙界物品 ${view.query}】查效果，或在【坊市查看】、秘境、无尽塔等途径寻找；是否掉落以对应奖励为准。`
+        }
+      }
       if (!backs.some((b: any) => b.goodsNum > 0 && (b.goodsType === '炼丹炉' || srv.data.getItem(b.goodsId)?.item_type === '炼丹炉'))) {
         cache.delete(key); return '道友背包内没有炼丹炉，无法炼丹！发送【修仙商店】查看购买途径。'
       }
+      if (page > 1 && previous?.character === character && previous.recipes.length) return render(previous, backs)
       const herbs: InventoryHerb[] = backs.filter((b: any) => b.goodsNum > 0 && srv.data.getItem(b.goodsId)?.item_type === '药材')
         .map((b: any) => ({ id: b.goodsId, info: srv.data.getItem(b.goodsId), num: b.goodsNum, bindNum: b.bindNum || 0 }))
       if (!herbs.length) { cache.delete(key); return '道友背包内没有药材，无法炼丹！' }
@@ -69,11 +83,25 @@ export function applyAlchemy(ctx: any, _config: any, options: { scan?: (herbs: Y
         cache.delete(key); cache.set(key, entry)
         while (cache.size > 200) cache.delete(cache.keys().next().value!)
         if (!recipes.length) return '系统未检测到可用丹方，道友背包内的药材不满足配方或冷热失和！'
-        return render(entry)
+        return render(entry, backs)
       } catch (error: any) {
         if (disposed || ctx.filter && !ctx.filter(s)) return ''
         return error.message || '丹方扫描暂不可用，请稍后重试。'
       }
+    })
+  ctx.command('xiuxian/炼丹材料 <num:integer>', '查看丹方合计用量与实时绑定库存')
+    .action(async ({ session: s }: any, num: number) => {
+      prune()
+      const entry = cache.get(keyOf(s)), player = await srv.getPlayer(s.userId)
+      if (!entry || !player || entry.character !== characterOf(player)) return '请先发送【炼丹】查看可用配方；列表保留10分钟。'
+      const recipe = Number.isSafeInteger(num) && num > 0 && entry.recipes[num - 1]
+      if (!recipe) return '没有这个序号的配方，请重新【炼丹】查看列表！'
+      const backs = await srv.getBack(s.userId), stock = recipeInventory(recipe, backs)
+      return [`【${num}、${recipe.elixirName}】材料明细（每炉）`,
+        (recipe as any).materialPolicy === 'unbound' ? '不绑定方案：只用未绑定材料，不会自动改用绑定材料。' : '混合材料方案：只要用到绑定药材，本批成丹全部绑定。',
+        ...stock.materials.map(m => `${m.name}（编号${m.id}）：单炉${m.num}，库存${m.total}，绑定${m.bound}，未绑定${m.free}`),
+        `当前最多可炼${stock.maxBatches}炉/批；仅用未绑定材料可炼${stock.freeBatches}炉/批（每批最多100炉）。`,
+        `炼制 ${num} [炉数]；背包变化后用【炼丹】重扫其他材料方案。`].join('\n')
     })
   ctx.command('xiuxian/炼制 <num:integer> [quantity:integer]', '按序号批量炼制丹药')
     .action(async ({ session: s }: any, num: number, quantity = 1) => {

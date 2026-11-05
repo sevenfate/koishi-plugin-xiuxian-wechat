@@ -52,8 +52,26 @@ export function formatSortedBackpack(backs: readonly BackItem[], data: ItemData)
       const type = info?.item_type || item.goodsType
       const isEquipment = type === '法器' || type === '防具' || item.goodsType === '装备'
       const bound = Math.min(Math.max(item.bindNum || 0, 0), item.goodsNum)
-      lines.push(`${level ? `${level} ` : ''}${info?.name || item.goodsName} x${item.goodsNum}${isEquipment && item.state === 1 ? '（已装备）' : ''}${bound ? `（绑定${bound}，可交易${item.goodsNum - bound}）` : ''}（编号${item.goodsId}）`)
+      lines.push(`${level ? `${level} ` : ''}${info?.name || item.goodsName} x${item.goodsNum}${isEquipment && item.state === 1 ? '（已装备）' : ''}（绑定${bound}，可交易${isEquipment && item.state === 1 ? 0 : item.goodsNum - bound}）${isEquipment && item.state === 1 ? `（未绑定${item.goodsNum - bound}）` : ''}（编号${item.goodsId}）`)
     }
   }
   return lines
+}
+
+/** 分类与名称可组合；仅影响查询，不扣物品、不改变交易绑定规则。 */
+export function queryBackpack(backs: readonly BackItem[], data: ItemData, query = ''): string[] {
+  let freeOnly = false
+  const tokens = query.trim().split(/\s+/).filter(Boolean).filter(token => {
+    if (token === '不绑定' || token === '未绑定') { freeOnly = true; return false }
+    return token !== '全部'
+  })
+  const types: Record<string, string[]> = { 丹药: ['丹药', '合成丹药'], 药材: ['药材'], 装备: ['法器', '防具', '装备'], 功法: ['功法', '辅修功法'] }
+  const selected = backs.filter(back => {
+    if (back.goodsNum <= 0 || freeOnly && back.goodsNum <= Math.max(0, back.bindNum || 0)) return false
+    const info = data.getItem(back.goodsId), type = info?.item_type || back.goodsType
+    return tokens.every(token => types[token] ? types[token].includes(type) : token === type || String(back.goodsId) === token || (info?.name || back.goodsName).includes(token))
+  })
+  const lines = selected.length ? formatSortedBackpack(selected, data) : ['背包中没有符合条件的物品（仅查询现有库存）。']
+  return [`筛选：${query.trim() || '全部'}；共${selected.length}种。可交易数量不包含绑定和已装备物品。`, ...lines,
+    '直接查：我的背包 物品名/编号；分类：我的丹药 / 我的药材；仅看未绑定：我的背包 不绑定 药材。']
 }

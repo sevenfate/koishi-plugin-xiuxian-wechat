@@ -1,6 +1,7 @@
 import { $ } from 'koishi'
 import { withEconomyTransaction } from './economy'
 import { displayName } from './wechat-profile'
+import { queryBackpack } from './item-order'
 
 export const FURNACE_PRICE = 200000
 const missing = '修仙界没有道友的信息，请输入【我要修仙】加入！'
@@ -35,6 +36,13 @@ async function gift(ctx: any, srv: any, session: any, target: string | undefined
 
 export function applyPlayerServices(ctx: any, config: any, getAtId: Function, today: () => string) {
   const srv = ctx.xiuxian
+  for (const [name, type] of [['我的丹药', '丹药'], ['我的药材', '药材']]) {
+    ctx.command(`xiuxian/${name} [query:text]`, `查询背包中的${type}，支持名称或编号`)
+      .action(async ({ session }: any, query = '') => {
+        if (!await srv.getPlayer(session.userId)) return missing
+        return queryBackpack(await srv.getBack(session.userId), srv.data, `${type} ${query}`.trim()).join('\n')
+      })
+  }
   ctx.command('xiuxian/赠送物品 <name:string> [quantity:integer]', '赠送未绑定物品给艾特的道友')
     .alias('送物品').action(({ session }: any, name: string, quantity = 1) => gift(ctx, srv, session, getAtId(session), name, quantity))
   ctx.command('xiuxian/修仙商店', '查看稳定供应的入门物资')
@@ -55,7 +63,7 @@ export function applyPlayerServices(ctx: any, config: any, getAtId: Function, to
     .action(async (_: any, topic?: string) => {
       const guides: Record<string, string> = {
         入门: '【我要修仙】建号 →【修仙签到】领灵石 →【宗门列表】选宗门 →【闭关】【出关】积累修为 →【突破】查看条件。气血耗尽会重伤，可闭关出关恢复。',
-        炼丹: '【修仙商店】买炼丹炉 → 悬赏、秘境、灵田或坊市获取药材 →【炼丹】扫描丹方 →【炼制 1 10】炼十炉 →【使用 丹药名 数量】服用。无配方通常是药材不足或冷热不调。',
+        炼丹: '【修仙商店】买炼丹炉 → 悬赏、秘境、灵田或坊市获取药材 →【炼丹】扫描丹方 →【炼制 1 10】炼十炉 →【使用 丹药名 数量】服用。【炼丹 修为/突破/恢复】按用途筛选；【炼丹材料 序号】查实时库存与可炼炉数；【我的丹药】【我的药材】查分类背包。只有配置了合成配方的丹药能炼制。',
         交易: '【坊市查看】看单价与库存；【坊市上架 物品名 单价 数量】出售；【坊市购买 编号 数量】购买；【赠送物品 编号 数量】并艾特道友可直接赠送。绑定物品不可交易或赠送。',
         宗门: '【宗门列表】查看全部宗门 →【加入宗门 编号】→【接取宗门任务】【完成宗门任务】；【我的宗门任务】查进度，【宗门每日供奉】领奖，【宗门贡献兑换】查看兑换规则。',
         战斗: '【我的状态】查气血、攻击、减伤；【我的神通】看战斗随机选用池；【遗忘神通 编号】先预览再确认。战斗详看【查看战斗详情】；持续神通可能一轮造成多段伤害。世界Boss用【查看世界boss】【讨伐世界boss】，独立冷却30分钟；悬赏/闭关期间也可讨伐，重伤需先恢复。',

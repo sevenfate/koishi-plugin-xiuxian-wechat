@@ -874,5 +874,17 @@
     "before": "    async getBuff(userId) {\n        const [buff] = await this.ctx.database.get('xiuxian_buff', { userId });\n        if (buff)\n            return buff;\n        return this.ctx.database.create('xiuxian_buff', { userId });\n    }",
     "after": "    async getBuff(userId) {\n        const [buff] = await this.ctx.database.get('xiuxian_buff', { userId });\n        if (buff)\n            return buff;\n        // 并发首次出手可能同时缺少buff行；仅插入主键，不能覆盖已有装备与功法。\n        await this.ctx.database.upsert('xiuxian_buff', [{ userId }]);\n        return (await this.ctx.database.get('xiuxian_buff', { userId }))[0];\n    }",
     "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "count": 1,
+    "before": "ctx.command('xiuxian/我的背包', '查看背包内的物品')\n        .alias('我的物品')\n        .action(async ({ session }) => {",
+    "after": "ctx.command('xiuxian/我的背包 [query:text]', '按分类、名称或编号查询背包')\n        .alias('我的物品')\n        .action(async ({ session }, query = '') => {"
+  },
+  {
+    "file": "lib/modules/back.js",
+    "count": 1,
+    "before": "lines.push(...require(\"../item-order\").formatSortedBackpack(backs, srv.data));",
+    "after": "lines.push(...require(\"../item-order\").queryBackpack(backs, srv.data, query));"
   }
 ]

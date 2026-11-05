@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-huaji-xiuxian",
-  "version": "0.6.5-wechat.23",
+  "version": "0.6.5-wechat.24",
   "description": "Koishi 群聊修仙扩展版，包含炼丹、世界 Boss、无尽塔与微信适配",
   "homepage": "https://github.com/sevenfate/koishi-plugin-xiuxian-wechat#readme",
   "repository": {

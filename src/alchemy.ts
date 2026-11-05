@@ -1,5 +1,5 @@
 import { withEconomyTransaction } from './economy'
-import { recipeMaterials } from './mix-recipe-list'
+import { recipeInventory, recipeMaterials } from './mix-recipe-list'
 
 /** 配方仅用于选择，库存、丹炉和角色在事务内重新检查。 */
 export async function craftBatch(ctx: any, srv: any, userId: string, recipe: any, quantity = 1, tiaohe: Function) {
@@ -16,12 +16,17 @@ export async function craftBatch(ctx: any, srv: any, userId: string, recipe: any
     const old = await service.getBackItem(userId, recipe.elixirId)
     if ((old?.goodsNum || 0) + produced > 2147483647) return '丹药库存接近存储上限，请减少炼制数量。'
     const materials = recipeMaterials(recipe)
-    for (const [id, material] of materials) {
-      const back = await service.getBackItem(userId, id), need = material.num * quantity
-      if (!back || back.goodsNum < need) return `药材不足：${material.name}需要${need}个，请重新【炼丹】刷新配方。`
-      if (recipe.materialPolicy === 'unbound' && back.goodsNum - Math.max(0, back.bindNum || 0) < need) {
-        return `未绑定药材不足：${material.name}需要${need}个，本次未消耗药材。不会自动使用绑定材料，请减少炉数或重新【炼丹 不绑定】。`
-      }
+    const materialBacks = []
+    for (const [id] of materials) {
+      const back = await service.getBackItem(userId, id)
+      if (back) materialBacks.push({ ...back, goodsId: id })
+    }
+    const stock = recipeInventory(recipe, materialBacks)
+    const insufficient = stock.materials.filter(m => (recipe.materialPolicy === 'unbound' ? m.free : m.total) < m.num * quantity)
+    if (insufficient.length) {
+      const unbound = recipe.materialPolicy === 'unbound'
+      return [`${unbound ? '未绑定药材不足' : '药材不足'}：${insufficient.map(m => `${m.name}需要${m.num * quantity}个，现有${m.total}个（绑定${m.bound}、未绑定${m.free}）`).join('；')}。`,
+        `该方案当前最多可炼${stock.maxBatches}炉/批，本次未消耗药材。${unbound ? '不会自动使用绑定材料。' : ''}发送【炼丹材料 序号】查用量，或【炼丹】重新扫描其他方案。`].join('\n')
     }
     if (tiaohe(service.data.getItem(recipe.mainId), recipe.mainNum, service.data.getItem(recipe.yaoyinId), recipe.yaoyinNum)) return '冷热调和失败！本次炼制未能成丹（药材未消耗）。'
     // 已绑定药材炼出的丹药也绑定，防止经炼丹绕过赠送/交易限制。
