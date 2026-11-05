@@ -68,7 +68,7 @@ npm run check
 npm pack
 ```
 
-`npm pack` 会自动构建，并生成可安装的 `.tgz`。构建需要系统提供 `tar` 命令，Windows 10/11、常见 Linux 与 macOS 系统通常已内置。
+`npm pack` 会自动构建，并生成可安装的 `.tgz`。解包由 Node.js 依赖处理，无需额外安装系统解压工具。
 
 首次构建会从 npm 下载 `upstream.json` 固定的上游发布包并校验 SHA-512，缓存于本项目的 `.cache/`；之后严格应用 `patches/wechat-profile.json` 并编译 `src/`。这套流程复用上游发布的游戏基础与静态资料，**构建需要联网下载上游包，且不依赖原来的业务仓库**。任一补丁定位或完整性不匹配都会中止。
 

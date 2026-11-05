@@ -1,12 +1,10 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const crypto = require('node:crypto')
-const { spawnSync } = require('node:child_process')
+const tar = require('tar')
 const esbuild = require('esbuild')
 const root = path.resolve(__dirname, '..')
 const upstream = require('../upstream.json')
-// Windows 固定使用系统内置 bsdtar，避免 Git/MSYS tar 的路径及 gzip 依赖差异。
-const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe') : 'tar'
 async function main() {
   const cache = path.join(root, '.cache', 'upstream')
   await fs.mkdir(cache, { recursive: true })
@@ -19,13 +17,14 @@ async function main() {
     await fs.writeFile(archive, bytes)
   }
   if ('sha512-' + crypto.createHash('sha512').update(bytes).digest('base64') !== upstream.integrity) throw new Error('上游包完整性不一致')
-  // GNU tar 会把 Windows 的 C:/... 误判成远程主机路径，统一在缓存目录使用相对归档名。
-  const listing = spawnSync(tar, ['-tf', path.basename(archive)], { cwd: cache, encoding: 'utf8', windowsHide: true })
-  if (listing.status !== 0) throw new Error('无法列出上游归档：' + (listing.error?.message || listing.stderr || listing.status))
-  const invalid = listing.stdout.trim().split(/\r?\n/).map(p => p.replace(/\\/g, '/')).find(p => !p.startsWith('package/') || p.split('/').includes('..'))
-  if (invalid) throw new Error('上游包文件路径校验失败：' + JSON.stringify(invalid))
-  const extracted = spawnSync(tar, ['-xf', path.basename(archive)], { cwd: cache, windowsHide: true })
-  if (extracted.status !== 0) throw new Error('上游包解包失败')
+  // 由 Node.js 解包，避免系统 tar 的盘符和中文文件名编码差异。
+  await tar.t({ file: archive, strict: true, onReadEntry(entry) {
+    const file = entry.path.replace(/\\/g, '/')
+    if (!file.startsWith('package/') || file.split('/').includes('..') || !['File', 'Directory'].includes(entry.type)) {
+      throw new Error('上游包文件路径或类型校验失败：' + JSON.stringify(file))
+    }
+  } })
+  await tar.x({ file: archive, cwd: cache, strict: true })
   // 只清理本项目的生成目录，避免重建时残留旧代码或上游历史数据库。
   for (const directory of ['lib', 'data']) {
     const target = path.join(root, directory)
