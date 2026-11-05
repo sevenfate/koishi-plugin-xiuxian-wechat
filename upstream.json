@@ -1,0 +1,8 @@
+{
+  "name": "koishi-plugin-huaji-xiuxian",
+  "version": "0.6.5",
+  "repository": "https://github.com/HuaJi114/koishi_plugin_xiuxian",
+  "tarball": "https://registry.npmjs.org/koishi-plugin-huaji-xiuxian/-/koishi-plugin-huaji-xiuxian-0.6.5.tgz",
+  "integrity": "sha512-614Co1jZLyh22DoXfWQWak3QlfmhGvHOFF5Whr9R1zPRTukSxm/EgsVIh4GL0LFqCWmRDIZzpyKVHwK6QCqfsQ==",
+  "license": "MIT"
+}

@@ -1,0 +1,878 @@
+[
+  {
+    "file": "lib/helpers.js",
+    "before": "/** 解析消息中第一个被 @ 的用户平台 ID */\nfunction getAtId(session) {\n    const at = koishi_1.h.select(session.elements ?? [], 'at')[0];\n    return at?.attrs.id;\n}",
+    "after": "/** 取首个个人目标，跳过用于唤起指令的机器人提及与群体提及。 */\nfunction getAtId(session) {\n    const excluded = new Set([session.selfId, session.bot?.selfId, session.bot?.deviceAccountId, 'all', 'here', 'notify@all']);\n    const at = koishi_1.h.select(session.elements ?? [], 'at').find(({ attrs }) =>\n        attrs.id && attrs.type !== 'all' && attrs.type !== 'here' && !excluded.has(attrs.id));\n    return at?.attrs.id;\n}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "const userName = session.username || session.userId;",
+    "after": "const userName = await wechat_profile.displayName(ctx, session, session.userId, session.username);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "${target.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, target)}",
+    "count": 4
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "finalHp[target.userId], target.userName)",
+    "after": "finalHp[target.userId], await wechat_profile.playerName(ctx, session, target))",
+    "count": 4
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": ".action(async (_, type) => {",
+    "after": ".action(async ({ session }, type) => {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "            list.forEach((i, n) => { msg += `第${n + 1}位  ${i.userName}  灵石：${(0, utils_1.formatAmount)(i.stone)}枚\\n`; });",
+    "after": "            const names = await Promise.all(list.map(p => wechat_profile.playerName(ctx, session, p)));\n            for (const [n, i] of list.entries()) { msg += `第${n + 1}位  ${names[n]}  灵石：${(0, utils_1.formatAmount)(i.stone)}枚\\n`; }",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "            list.forEach((i, n) => { msg += `第${n + 1}位  ${i.userName}  战力：${(0, utils_1.formatAmount)(i.power)}\\n`; });",
+    "after": "            const names = await Promise.all(list.map(p => wechat_profile.playerName(ctx, session, p)));\n            for (const [n, i] of list.entries()) { msg += `第${n + 1}位  ${names[n]}  战力：${(0, utils_1.formatAmount)(i.power)}\\n`; }",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "        list.forEach((i, n) => { msg += `第${n + 1}位 ${i.userName} ${i.level}，修为${(0, utils_1.formatAmount)(i.exp)}\\n`; });",
+    "after": "        const names = await Promise.all(list.map(p => wechat_profile.playerName(ctx, session, p)));\n            for (const [n, i] of list.entries()) { msg += `第${n + 1}位 ${names[n]} ${i.level}，修为${(0, utils_1.formatAmount)(i.exp)}\\n`; }",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "results.push({ userName: p.userName, stone });",
+    "after": "results.push({ userId: p.userId, platform: p.platform, userName: p.userName, stone });",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": "${player.userName || '无名氏(发送 改名+道号 更新)'}",
+    "after": "${await wechat_profile.playerName(ctx, session, player)}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": " 道友的信息`,",
+    "after": " 道友的信息`,\n            ...(wechat_profile.readableName(player.userName, player.userId) ? [`道号：${wechat_profile.readableName(player.userName, player.userId)}`] : []),",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": "${player.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, player)}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/cultivate.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/cultivate.js",
+    "before": "${player.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, player)}",
+    "count": 2
+  },
+  {
+    "file": "lib/modules/cultivate.js",
+    "before": "${target.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, target)}",
+    "count": 2
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "members\n            .sort((a, b) => a.sectPosition - b.sectPosition)\n            .forEach((m) => lines.push(`${srv.data.sectTitle(m.sectPosition)}：${m.userName}（贡献 ${(0, utils_1.formatAmount)(m.sectContribution)}）`));",
+    "after": "for (const m of members.sort((a, b) => a.sectPosition - b.sectPosition)) {\n            lines.push(`${srv.data.sectTitle(m.sectPosition)}：${await wechat_profile.playerName(ctx, session, m)}（贡献 ${(0, utils_1.formatAmount)(m.sectContribution)}）`);\n        }",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "${target.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, target)}",
+    "count": 3
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "items.forEach((it) => {",
+    "after": "for (const it of items) {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "${it.sellerName}",
+    "after": "${it.sellerId === '0' ? it.sellerName : await wechat_profile.displayName(ctx, session, it.sellerId, it.sellerName)}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "        });\n        return lines.join('\\n');",
+    "after": "        }\n        return lines.join('\\n');",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "        const pending = {",
+    "after": "        const targetName = await wechat_profile.playerName(ctx, s, target);\n        const pending = {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "${target.userName}道友灵石不足",
+    "after": "${await wechat_profile.playerName(ctx, s, target)}道友灵石不足",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "${target.userName} 道友",
+    "after": "${targetName} 道友",
+    "count": 2
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "const whoShot = challengerDies ? challenger.userName : target.userName;",
+    "after": "const whoShot = await wechat_profile.playerName(ctx, s, challengerDies ? challenger : target);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/gamble.js",
+    "before": "${winner.userName}",
+    "after": "${await wechat_profile.playerName(ctx, s, winner)}",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"./wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.js",
+    "before": "async function buildFighter(srv, userId)",
+    "after": "async function buildFighter(srv, userId, session)",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.js",
+    "before": "name: real.userName,",
+    "after": "name: real.userName,\n        displayName: session ? await wechat_profile.playerName(srv.ctx, session, real) : real.userName,",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "(0, combat_stats_1.buildFighter)(srv, session.userId)",
+    "after": "(0, combat_stats_1.buildFighter)(srv, session.userId, session)",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "(0, combat_stats_1.buildFighter)(srv, targetId)",
+    "after": "(0, combat_stats_1.buildFighter)(srv, targetId, session)",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/boss.js",
+    "before": "(0, combat_stats_1.buildFighter)(srv, userId)",
+    "after": "(0, combat_stats_1.buildFighter)(srv, userId, session)",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "(0, combat_stats_1.buildFighter)(srv, userId)",
+    "after": "(0, combat_stats_1.buildFighter)(srv, userId, session)",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "${attacker.name}",
+    "after": "${attacker.displayName || attacker.name}",
+    "count": 6
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "${defender.name}",
+    "after": "${defender.displayName || defender.name}",
+    "count": 4
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "log.push(`${victor}胜`);",
+    "after": "log.push(`${(victor === p1.name ? p1.displayName : p2.displayName) || victor}胜`);",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.d.ts",
+    "before": "import { GameData }",
+    "after": "import type { Session } from 'koishi';\nimport { GameData }",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.d.ts",
+    "before": "userId: string): Promise<Fighter",
+    "after": "userId: string, session?: Session): Promise<Fighter",
+    "count": 1
+  },
+  {
+    "file": "lib/types.d.ts",
+    "before": "export interface Fighter {",
+    "after": "export interface Fighter {\n    displayName?: string;",
+    "count": 1
+  },
+  {
+    "file": "lib/service.d.ts",
+    "before": "stoneTop(): Promise<Array<{\n        userName: string;",
+    "after": "stoneTop(): Promise<Array<{\n        userId: string;\n        platform: string;\n        userName: string;",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "let victor = '';",
+    "after": "let victor = '';\n    let victorId = '';",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "victor = p1.name;",
+    "after": "victor = p1.name;\n            victorId = p1.userId;",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "victor = p2.name;",
+    "after": "victor = p2.name;\n            victorId = p2.userId;",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "if (!victor)\n        victor = hp[p1.userId] >= hp[p2.userId] ? p1.name : p2.name;",
+    "after": "if (!victorId) {\n        const winner = hp[p1.userId] >= hp[p2.userId] ? p1 : p2;\n        victor = winner.name;\n        victorId = winner.userId;\n    }",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "(victor === p1.name ? p1.displayName : p2.displayName)",
+    "after": "(victorId === p1.userId ? p1.displayName : p2.displayName)",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "return [log, victor, { ...hp }];",
+    "after": "return [log, victor, { ...hp }, victorId];",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "[log, victor, finalHp]",
+    "after": "[log, victor, finalHp, victorId]",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "if (victor === player.userName)",
+    "after": "if (victorId === player.userId)",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/boss.js",
+    "before": "[log, victor, finalHp]",
+    "after": "[log, victor, finalHp, victorId]",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/boss.js",
+    "before": "if (victor === fighter.name)",
+    "after": "if (victorId === fighter.userId)",
+    "count": 1
+  },
+  {
+    "file": "lib/sect-missions.js",
+    "before": "[roundLog, victor, finalHp]",
+    "after": "[roundLog, victor, finalHp, victorId]",
+    "count": 1
+  },
+  {
+    "file": "lib/sect-missions.js",
+    "before": "if (victor !== player.name)",
+    "after": "if (victorId !== player.userId)",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.d.ts",
+    "before": "[string[], string, Record<string, number>]",
+    "after": "[string[], string, Record<string, number>, string]",
+    "count": 1
+  },
+  {
+    "file": "lib/sect-missions.d.ts",
+    "before": "[string[], string, Record<string, number>]",
+    "after": "[string[], string, Record<string, number>, string]",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "${player.userName}",
+    "after": "${await wechat_profile.playerName(ctx, session, player)}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/blessed-spot.js",
+    "before": "\"use strict\";",
+    "after": "\"use strict\";\nconst wechat_profile = require(\"../wechat-profile\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/blessed-spot.js",
+    "before": "defaultSpotName(player.userName)",
+    "after": "defaultSpotName(await wechat_profile.playerName(ctx, session, player))",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        (0, slash_1.applySlashCompat)(root);",
+    "after": "        (0, slash_1.applySlashCompat)(root);\n        require(\"./wechat-mentions\").applyMentionCompat(root);",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "            power: 'unsigned',",
+    "after": "            power: 'double',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/endgame.js",
+    "before": "    ctx.command('xiuxian/宗门贡献兑换 <类型:string> [数量:integer]', '用宗门贡献兑换资源（灵石/修为/丹药）')\n        .alias('贡献兑换')\n        .action(async ({ session }, type, amount) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (!player.sectId)\n            return '散修无宗门贡献，请先加入宗门！';\n        type = (type ?? '').trim();\n        const contribution = player.sectContribution ?? 0;\n        if (contribution <= 0)\n            return '道友暂无宗门贡献，可通过【宗门捐献】获取。';\n        if (type === '灵石' || type === 'stone') {\n            const cnt = amount && amount > 0 ? amount : contribution;\n            const need = Math.ceil(cnt);\n            if (need > contribution)\n                return `贡献不足！当前贡献 ${(0, utils_1.formatAmount)(contribution)}，兑换 ${(0, utils_1.formatAmount)(need)} 需 ${(0, utils_1.formatAmount)(need)} 贡献。`;\n            const stone = need * EXCHANGE_STONE_RATE;\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - need });\n            await srv.gainStoneForUser(userId, stone, session.platform);\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(need)} 贡献，获得灵石 ${(0, utils_1.formatAmount)(stone)} 枚。`;\n        }\n        if (type === '修为' || type === 'exp') {\n            const cnt = amount && amount > 0 ? amount : contribution;\n            const need = Math.ceil(cnt);\n            if (need > contribution)\n                return `贡献不足！当前贡献 ${(0, utils_1.formatAmount)(contribution)}，兑换 ${(0, utils_1.formatAmount)(need)} 需 ${(0, utils_1.formatAmount)(need)} 贡献。`;\n            const exp = need * EXCHANGE_EXP_RATE;\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - need });\n            await srv.addExp(userId, exp);\n            await srv.updatePower(userId);\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(need)} 贡献，获得修为 ${(0, utils_1.formatAmount)(exp)}。`;\n        }\n        if (type === '丹药' || type === 'pill') {\n            const cnt = amount && amount > 0 ? amount : 1;\n            const need = cnt * EXCHANGE_PILL_COST;\n            if (need > contribution)\n                return `贡献不足！兑换 ${cnt} 枚丹药需 ${(0, utils_1.formatAmount)(need)} 贡献，当前 ${(0, utils_1.formatAmount)(contribution)}。`;\n            const itemRank = srv.data.itemRankByLevel(player.level);\n            const granted = [];\n            for (let i = 0; i < cnt; i++) {\n                const itemId = srv.data.randomItemIdByRank(itemRank, ['丹药'], (0, utils_1.luckPoints)(player.rebirth));\n                if (itemId === 0)\n                    continue;\n                const info = srv.data.getItem(itemId);\n                if (!info)\n                    continue;\n                await srv.sendBack(userId, Number(itemId), info.name, '丹药', 1);\n                granted.push(info.name);\n            }\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - need });\n            if (!granted.length)\n                return '兑换失败：未能开出丹药，贡献已退回。';\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(need)} 贡献，获得丹药：${granted.join('、')}。`;\n        }\n        return [\n            '宗门贡献兑换用法：',\n            '1、宗门贡献兑换 灵石 [数量]：1 贡献 = 10 灵石（不填数量则全部兑换）',\n            '2、宗门贡献兑换 修为 [数量]：1 贡献 = 1 修为（不填数量则全部兑换）',\n            `3、宗门贡献兑换 丹药 [数量]：每 ${EXCHANGE_PILL_COST} 贡献随机兑换一枚丹药`,\n            `道友当前贡献：${(0, utils_1.formatAmount)(contribution)}`,\n        ].join('\\n');\n    });\n",
+    "after": "    ctx.command('xiuxian/宗门贡献兑换 <类型:string> [数量:integer]', '用宗门贡献兑换资源（灵石/修为/丹药）')\n        .alias('贡献兑换')\n        .action(async ({ session }, type, amount) => require(\"../economy\").withEconomyTransaction(ctx, srv, session.userId, async (ctx, srv) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (!player.sectId)\n            return '散修无宗门贡献，请先加入宗门！';\n        if (amount !== undefined && (!Number.isSafeInteger(amount) || amount <= 0))\n            return '请输入正整数数量！';\n        type = (type ?? '').trim();\n        const contribution = player.sectContribution ?? 0;\n        if (contribution <= 0)\n            return '道友暂无宗门贡献，可通过【宗门捐献】获取。';\n        if (type === '灵石' || type === 'stone') {\n            const cnt = amount && amount > 0 ? amount : contribution;\n            const need = Math.ceil(cnt);\n            if (need > contribution)\n                return `贡献不足！当前贡献 ${(0, utils_1.formatAmount)(contribution)}，兑换 ${(0, utils_1.formatAmount)(need)} 需 ${(0, utils_1.formatAmount)(need)} 贡献。`;\n            const stone = Math.floor(need * EXCHANGE_STONE_RATE);\n            if (stone <= 0)\n                return '至少需要 10 贡献才能兑换 1 灵石。';\n            const cost = stone * 10;\n            const wallet = await srv.getStoneForUser(userId, session.platform);\n            if (!Number.isSafeInteger(stone) || wallet + stone > 2147483647)\n                return '兑换后灵石将超过钱包上限，请减少兑换数量。';\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - cost });\n            await srv.gainStoneForUser(userId, stone, session.platform);\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(cost)} 贡献，获得灵石 ${(0, utils_1.formatAmount)(stone)} 枚。`;\n        }\n        if (type === '修为' || type === 'exp') {\n            const cnt = amount && amount > 0 ? amount : contribution;\n            const need = Math.ceil(cnt);\n            if (need > contribution)\n                return `贡献不足！当前贡献 ${(0, utils_1.formatAmount)(contribution)}，兑换 ${(0, utils_1.formatAmount)(need)} 需 ${(0, utils_1.formatAmount)(need)} 贡献。`;\n            const maxExp = srv.data.closingMaxExp(player.level, config.closingExpUpperLimit);\n            const room = Math.max(Math.floor(maxExp) - player.exp, 0);\n            const exp = Math.min(Math.floor(need * EXCHANGE_EXP_RATE), room);\n            if (exp <= 0)\n                return room <= 0 ? '修为已达当前境界修炼上限，请先突破！' : '至少需要 10 贡献才能兑换 1 修为。';\n            const cost = exp * 10;\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - cost });\n            await srv.addExp(userId, exp);\n            await srv.updatePower(userId);\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(cost)} 贡献，获得修为 ${(0, utils_1.formatAmount)(exp)}。`;\n        }\n        if (type === '丹药' || type === 'pill') {\n            const cnt = amount && amount > 0 ? amount : 1;\n            if (cnt > 100)\n                return '丹药单次最多兑换 100 枚，请分批兑换。';\n            const need = cnt * EXCHANGE_PILL_COST;\n            if (need > contribution)\n                return `贡献不足！兑换 ${cnt} 枚丹药需 ${(0, utils_1.formatAmount)(need)} 贡献，当前 ${(0, utils_1.formatAmount)(contribution)}。`;\n            const itemRank = srv.data.itemRankByLevel(player.level);\n            const granted = [];\n            for (let i = 0; i < cnt; i++) {\n                const itemId = srv.data.randomItemIdByRank(itemRank, ['丹药'], (0, utils_1.luckPoints)(player.rebirth));\n                if (itemId === 0)\n                    continue;\n                const info = srv.data.getItem(itemId);\n                if (!info)\n                    continue;\n                await srv.sendBack(userId, Number(itemId), info.name, '丹药', 1);\n                granted.push(info.name);\n            }\n            if (granted.length !== cnt)\n                throw new Error('丹药生成失败，本次兑换已回滚');\n            await ctx.database.set('xiuxian_player', { userId }, { sectContribution: contribution - need });\n            return `兑换成功！消耗 ${(0, utils_1.formatAmount)(need)} 贡献，获得丹药：${granted.join('、')}。`;\n        }\n        return [\n            '宗门贡献兑换用法：',\n            '1、宗门贡献兑换 灵石 [数量]：10 贡献 = 1 灵石（不填数量则全部兑换）',\n            '2、宗门贡献兑换 修为 [数量]：10 贡献 = 1 修为，受当前境界修炼上限限制（不填数量则全部兑换）',\n            `3、宗门贡献兑换 丹药 [数量]：每 ${EXCHANGE_PILL_COST} 贡献随机兑换一枚丹药`,\n            `道友当前贡献：${(0, utils_1.formatAmount)(contribution)}`,\n        ].join('\\n');\n    }));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/endgame.js",
+    "before": "const EXCHANGE_STONE_RATE = 10; // 1 贡献 = 10 灵石",
+    "after": "const EXCHANGE_STONE_RATE = 0.1; // 10 贡献换 1 灵石，捐献兑换循环始终有成本",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/endgame.js",
+    "before": "const EXCHANGE_EXP_RATE = 1; // 1 贡献 = 1 修为（贡献本身按捐献灵石 1:1 累加，修为更稀缺）",
+    "after": "const EXCHANGE_EXP_RATE = 0.1; // 与灵石修炼一致：10 贡献换 1 修为",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "    ctx.command('xiuxian/宗门捐献 <amount:integer>', '向宗门捐献灵石')\n        .action(async ({ session }, amount) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (!player.sectId)\n            return '道友尚未加入任何宗门！';\n        if (!amount || amount <= 0)\n            return '请输入正确的捐献数量！';\n        if (!(await srv.costStoneForUser(userId, amount, session.platform)))\n            return '道友的灵石不足！';\n        const sect = (await srv.getSectById(player.sectId));\n        await ctx.database.set('xiuxian_sect', { sectId: sect.sectId }, {\n            sectUsedStone: sect.sectUsedStone + amount,\n            sectScale: sect.sectScale + amount * 10,\n        });\n        await ctx.database.set('xiuxian_player', { userId }, { sectContribution: player.sectContribution + amount });\n        return `道友为宗门捐献了${amount}灵石，宗门建设度提升${amount * 10}！`;\n    });\n",
+    "after": "    ctx.command('xiuxian/宗门捐献 <amount:integer>', '向宗门捐献灵石')\n        .action(async ({ session }, amount) => require(\"../economy\").withEconomyTransaction(ctx, srv, session.userId, async (ctx, srv) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (!player.sectId)\n            return '道友尚未加入任何宗门！';\n        if (!Number.isSafeInteger(amount) || amount <= 0)\n            return '请输入正确的捐献数量！';\n        if (!(await srv.costStoneForUser(userId, amount, session.platform)))\n            return '道友的灵石不足！';\n        const sect = (await srv.getSectById(player.sectId));\n        await ctx.database.set('xiuxian_sect', { sectId: sect.sectId }, {\n            sectUsedStone: sect.sectUsedStone + amount,\n            sectScale: sect.sectScale + amount * 10,\n        });\n        await ctx.database.set('xiuxian_player', { userId }, { sectContribution: player.sectContribution + amount });\n        return `道友为宗门捐献了${amount}灵石，宗门建设度提升${amount * 10}！`;\n    }));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/cultivate.js",
+    "before": "    async function doOutClosing(userId, useStone) {\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const cd = await srv.getCd(userId);\n        if (!cd || cd.type !== 1)\n            return '道友现在并没有在闭关哦~';\n        const wasInjured = player.hp <= Math.floor(player.exp / 10);\n        const maxExp = srv.data.closingMaxExp(player.level, config.closingExpUpperLimit);\n        let userGetExpMax = Math.max(Math.floor(maxExp) - player.exp, 0);\n        const expTime = Math.floor((0, utils_1.dateDiffSeconds)(new Date(), cd.createTime) / 60);\n        const rootRate = srv.data.roots[player.rootType]?.type_speeds ?? 1;\n        const realmRate = srv.data.levels[player.level]?.spend ?? 1;\n        const skills = await srv.getLearnedSkills(userId);\n        const merged = (0, skills_1.mergeSkillBuffs)(skills, srv.data);\n        const rateBuff = merged.ratebuff;\n        // 洞府灵气加成：每级 +5% 闭关修为（洞天经营玩法）\n        const buff = await srv.getBuff(userId);\n        const spiritBonus = buff.blessedSpot * 0.05;\n        let exp = Math.floor(expTime * config.closingExp * (rootRate * realmRate * (1 + rateBuff + spiritBonus)));\n        await srv.setState(userId, 0);\n        const healMsg = wasInjured ? '，重伤已愈，气血与真元已恢复至满' : '';\n        if (exp >= userGetExpMax) {\n            await srv.addExp(userId, userGetExpMax);\n            await srv.updatePower(userId);\n            await srv.resetState(userId);\n            return `闭关结束，本次闭关到达上限，共增加修为：${userGetExpMax}${healMsg}`;\n        }\n        if (useStone) {\n            const stone = await srv.getStoneForUser(userId, player.platform);\n            if (exp <= stone) {\n                await srv.costStoneForUser(userId, Math.floor(exp / 2), player.platform);\n                exp = exp * 2;\n                await srv.addExp(userId, exp);\n            }\n            else {\n                await srv.costStoneForUser(userId, stone, player.platform);\n                exp = exp + stone;\n                await srv.addExp(userId, exp);\n            }\n            await srv.updatePower(userId);\n            await srv.resetState(userId);\n            return `闭关结束，共闭关${expTime}分钟，本次闭关增加修为：${exp}${healMsg}`;\n        }\n        await srv.addExp(userId, exp);\n        await srv.updatePower(userId);\n        await srv.resetState(userId);\n        return `闭关结束，共闭关${expTime}分钟，本次闭关增加修为：${exp}${healMsg}`;\n    }\n",
+    "after": "    async function doOutClosing(userId, useStone) {\n        return require(\"../economy\").withEconomyTransaction(ctx, srv, userId, async (_ctx, srv) => {\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const cd = await srv.getCd(userId);\n        if (!cd || cd.type !== 1)\n            return '道友现在并没有在闭关哦~';\n        const wasInjured = player.hp <= Math.floor(player.exp / 10);\n        const maxExp = srv.data.closingMaxExp(player.level, config.closingExpUpperLimit);\n        let userGetExpMax = Math.max(Math.floor(maxExp) - player.exp, 0);\n        const expTime = Math.max(Math.floor((0, utils_1.dateDiffSeconds)(new Date(), cd.createTime) / 60), 0);\n        const rootRate = srv.data.roots[player.rootType]?.type_speeds ?? 1;\n        const realmRate = srv.data.levels[player.level]?.spend ?? 1;\n        const skills = await srv.getLearnedSkills(userId);\n        const merged = (0, skills_1.mergeSkillBuffs)(skills, srv.data);\n        const rateBuff = merged.ratebuff;\n        // 洞府灵气加成：每级 +5% 闭关修为（洞天经营玩法）\n        const buff = await srv.getBuff(userId);\n        const spiritBonus = buff.blessedSpot * 0.05;\n        let exp = Math.floor(expTime * config.closingExp * (rootRate * realmRate * (1 + rateBuff + spiritBonus)));\n        await srv.setState(userId, 0);\n        const healMsg = wasInjured ? '，重伤已愈，气血与真元已恢复至满' : '';\n        if (exp >= userGetExpMax) {\n            await srv.addExp(userId, userGetExpMax);\n            await srv.updatePower(userId);\n            await srv.resetState(userId);\n            return `闭关结束，本次闭关到达上限，共增加修为：${userGetExpMax}${healMsg}`;\n        }\n        if (useStone) {\n            const stone = await srv.getStoneForUser(userId, player.platform);\n            if (exp <= stone) {\n                await srv.costStoneForUser(userId, Math.floor(exp / 2), player.platform);\n                exp = Math.min(exp * 2, userGetExpMax);\n                await srv.addExp(userId, exp);\n            }\n            else {\n                await srv.costStoneForUser(userId, stone, player.platform);\n                exp = Math.min(exp + stone, userGetExpMax);\n                await srv.addExp(userId, exp);\n            }\n            await srv.updatePower(userId);\n            await srv.resetState(userId);\n            return `闭关结束，共闭关${expTime}分钟，本次闭关增加修为：${exp}${healMsg}`;\n        }\n        await srv.addExp(userId, exp);\n        await srv.updatePower(userId);\n        await srv.resetState(userId);\n        return `闭关结束，共闭关${expTime}分钟，本次闭关增加修为：${exp}${healMsg}`;\n        });\n    }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/mix-elixir-util.js",
+    "before": "    return recipes;",
+    "after": "    return require(\"./mix-recipe-list\").selectMixRecipes(recipes, yaocaiList);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "const mix_elixir_util_1 = require(\"../mix-elixir-util\");",
+    "after": "const mix_elixir_util_1 = require(\"../mix-elixir-util\");\nconst recipe_list = require(\"../mix-recipe-list\");",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "'1、炼丹：扫描背包药材，列出可炼制配方',",
+    "after": "'1、炼丹 [页码]：按丹药去重，每种推荐一个最省药材的配方；例如：炼丹 2',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "ctx.command('xiuxian/炼丹', '扫描背包并列出可炼制丹方')\n        .action(async ({ session }) => {\n        const userId = session.userId;",
+    "after": "ctx.command('xiuxian/炼丹 [page:integer]', '扫描背包并分页列出可炼制丹方')\n        .action(async ({ session }, page = 1) => {\n        const userId = session.userId;\n        if (!Number.isSafeInteger(page) || page < 1) return '请输入正确的页码，例如：炼丹 1';\n        if (page > 1 && pendingRecipes.has(userId)) return recipe_list.renderMixRecipePage(pendingRecipes.get(userId), page);\n        pendingRecipes.delete(userId);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "        const lines = ['☆------可炼制丹方------☆'];\n        recipes.slice(0, 20).forEach((r, i) => {\n            lines.push(`${i + 1}、${r.elixirName}：${r.formulaShort}`);\n            lines.push(`   效果：${r.desc}`);\n        });\n        if (recipes.length > 20)\n            lines.push(`（仅显示前20条，共${recipes.length}条）`);\n        lines.push('请发送【炼制 <序号>】执行炼制，例如：炼制 1');\n        return lines.join('\\n');",
+    "after": "        return recipe_list.renderMixRecipePage(recipes, page);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "        const consume = async (goodsId, need) => {\n            const item = await srv.getBackItem(userId, goodsId);\n            return !!item && item.goodsNum >= need;\n        };\n        if (!(await consume(recipe.mainId, recipe.mainNum))) {\n            return `药材不足：${recipe.mainName} 需要 ${recipe.mainNum} 个！`;\n        }\n        if (!(await consume(recipe.yaoyinId, recipe.yaoyinNum))) {\n            return `药材不足：${recipe.yaoyinName} 需要 ${recipe.yaoyinNum} 个！`;\n        }\n        if (!(await consume(recipe.fuyaoId, recipe.fuyaoNum))) {\n            return `药材不足：${recipe.fuyaoName} 需要 ${recipe.fuyaoNum} 个！`;\n        }\n",
+    "after": "        const materials = recipe_list.recipeMaterials(recipe);\n        for (const [goodsId, material] of materials) {\n            const item = await srv.getBackItem(userId, goodsId);\n            if (!item || item.goodsNum < material.num) return '药材不足：' + material.name + ' 需要 ' + material.num + ' 个！请重新【炼丹】刷新配方。';\n        }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "        await srv.reduceBack(userId, recipe.mainId, recipe.mainNum, 0);\n        await srv.reduceBack(userId, recipe.yaoyinId, recipe.yaoyinNum, 0);\n        await srv.reduceBack(userId, recipe.fuyaoId, recipe.fuyaoNum, 0);",
+    "after": "        for (const [goodsId, material] of materials) await srv.reduceBack(userId, goodsId, material.num, 0);",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        (0, info_1.applyInfo)(playCtx, config);",
+    "after": "        (0, info_1.applyInfo)(playCtx, config);\n        require(\"./forget-skill\").applyForgetSkill(playCtx);",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        '我的背包 / 闭关 / 出关 / 突破',",
+    "after": "        '我的背包 / 闭关 / 出关 / 突破',\n        '我的神通 / 遗忘神通 <名称或编号>',",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        (0, info_1.applyInfo)(playCtx, config);",
+    "after": "        (0, info_1.applyInfo)(playCtx, config);\n        require(\"./view-techniques\").applyViewTechniques(playCtx);",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        '我的背包 / 闭关 / 出关 / 突破',",
+    "after": "        '我的背包 / 闭关 / 出关 / 突破',\n        '我的功法 / 查看功法（品阶与效果）',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "const byName = srv.data.findItemsByName(query);",
+    "after": "const byName = valid.includes(query) ? [] : srv.data.findItemsByName(query);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "const list = Object.entries(data).slice(0, 50);",
+    "after": "const list = Object.entries(data);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "查看修仙界物品 <编号>",
+    "after": "查看修仙界物品 编号",
+    "count": 2
+  },
+  {
+    "file": "lib/modules/back.js",
+    "before": "        const groups = {};\n        for (const b of backs) {\n            const info = srv.data.getItem(b.goodsId);\n            const name = info?.name ?? b.goodsName;\n            const lv = info?.level ? `${info.level} ` : '';\n            const type = info?.item_type ?? b.goodsType;\n            const isEquip = type === '法器' || type === '防具' || b.goodsType === '装备';\n            const used = isEquip && b.state === 1 ? '（已装备）' : '';\n            const groupKey = type === '法器' || type === '防具' ? '装备' : (type || b.goodsType);\n            (groups[groupKey] ?? (groups[groupKey] = [])).push(`${lv}${name} x${b.goodsNum}${used}`);\n        }\n        const lines = [`${await wechat_profile.playerName(ctx, session, player)} 道友的背包：`];\n        for (const [type, items] of Object.entries(groups)) {\n            lines.push(`☆------${type}------☆`);\n            lines.push(...items);\n        }\n",
+    "after": "        const lines = [`${await wechat_profile.playerName(ctx, session, player)} 道友的背包（各类按等级从高到低）：`];\n        lines.push(...require(\"../item-order\").formatSortedBackpack(backs, srv.data));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": "const skills = await srv.getLearnedSkills(userId);",
+    "after": "const skills = require(\"../item-order\").sortByItemGrade(await srv.getLearnedSkills(userId), srv.data, skill => skill.skillId);",
+    "count": 2
+  },
+  {
+    "file": "lib/modules/info.js",
+    "before": "return `  · ${info.name}（${(0, skills_1.formatSkillEffect)(info)}）`;",
+    "after": "return `  · 【${info.level || \"品阶未标注\"}】${info.name}（${(0, skills_1.formatSkillEffect)(info)}）`;",
+    "count": 3
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "${srv.data.getItem(w.itemId)?.name ?? ''}",
+    "after": "${require(\"../work-reward\").formatWorkReward(srv.data, w.itemId)}",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "${item.level ?? ''}${item.name}!",
+    "after": "${require(\"../work-reward\").formatWorkReward(srv.data, active.itemId)}!",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "    const pending = new Map();",
+    "after": "    ctx.model.extend('xiuxian_work_pending', { userId: 'string', list: 'json' }, { primary: 'userId' });",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "ctx.command('xiuxian/悬赏令', '刷新并查看悬赏令')",
+    "after": "ctx.command('xiuxian/悬赏令', '查看已有悬赏令，无列表时首次生成')",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        let stoneMsg = '';\n        const refreshCount = player.workRefreshCount ?? 0;\n        if (isManual) {\n            if (refreshCount >= FREE_REFRESH) {\n                if (!(await srv.costStoneForUser(userId, REFRESH_COST, platform))) {\n                    return `道友的灵石不足以刷新，下次刷新消耗灵石：${REFRESH_COST}枚`;\n                }\n                stoneMsg = `\\n道友消耗灵石${REFRESH_COST}枚，成功刷新悬赏令`;\n            }\n            await ctx.database.set('xiuxian_player', { userId }, { workRefreshCount: refreshCount + 1 });\n        }\n        const list = makeWork(player.level, player.exp, player.rebirth);\n        if (!list.length)\n            return '道友的境界暂无可用悬赏令！';\n        pending.set(userId, list);\n        const updated = isManual ? refreshCount + 1 : refreshCount;\n        const free = Math.max(FREE_REFRESH - updated, 0);\n",
+    "after": "        const [saved] = await ctx.database.get('xiuxian_work_pending', { userId });\n        const refreshCount = player.workRefreshCount ?? 0;\n        let list = saved?.list;\n        let stoneMsg = '';\n        let updated = refreshCount;\n        if (isManual || !list?.length) {\n            list = makeWork(player.level, player.exp, player.rebirth);\n            if (!list.length) return '道友的境界暂无可用悬赏令！';\n            if (isManual) {\n                if (refreshCount >= FREE_REFRESH) {\n                    if (!(await srv.costStoneForUser(userId, REFRESH_COST, platform))) {\n                        return `道友的灵石不足以刷新，下次刷新消耗灵石：${REFRESH_COST}枚`;\n                    }\n                    stoneMsg = `\\n道友消耗灵石${REFRESH_COST}枚，成功刷新悬赏令`;\n                }\n                updated++;\n                await ctx.database.set('xiuxian_player', { userId }, { workRefreshCount: updated });\n            }\n            await ctx.database.upsert('xiuxian_work_pending', [{ userId, list }]);\n        }\n        const free = Math.max(FREE_REFRESH - updated, 0);\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "    async function doRefresh(userId, platform, isManual) {",
+    "after": "    async function doRefresh(userId, platform, isManual) {\n        return require('../economy').withEconomyTransaction(ctx, srv, userId, async (ctx, srv) => {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        return lines.join('\\n');\n    }",
+    "after": "        return lines.join('\\n');\n        });\n    }",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        const list = pending.get(userId);",
+    "after": "        const [saved] = await ctx.database.get('xiuxian_work_pending', { userId });\n        const list = saved?.list;",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        pending.delete(userId);",
+    "after": "        await ctx.database.remove('xiuxian_work_pending', { userId });",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        '1、悬赏令：获取对应实力的悬赏令',",
+    "after": "        '1、悬赏令：查看已有任务；没有列表时首次生成，重复查看不会刷新',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": ".action(async ({ session }, num) => {",
+    "after": ".action(async ({ session }, num) => require('../economy').withEconomyTransaction(ctx, srv, session.userId, async (ctx, srv) => {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        return `接取任务【${work.name}】成功，预计需要${work.time}分钟。`;\n    });",
+    "after": "        return `接取任务【${work.name}】成功，预计需要${work.time}分钟。`;\n    }));",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    ctx.command('xiuxian/坊市购买 <num:integer>', '购买坊市物品')\n        .action(async ({ session }, num) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const items = await listShop(gid);\n        const item = items.find((i) => i.id === num);\n        if (!item)\n            return '请输入正确的坊市编号！';\n        if (!(await srv.costStoneForUser(userId, item.price, session.platform))) {\n            return `购买需要灵石${(0, utils_1.formatAmount)(item.price)}枚，道友灵石不足！`;\n        }\n        await srv.sendBack(userId, item.goodsId, item.goodsName, item.goodsType, item.goodsNum);\n        const charge = Math.floor(item.price * config.shopServiceCharge);\n        const sellerGain = item.price - charge;\n        if (item.sellerId !== '0') {\n            await srv.gainStoneForUser(item.sellerId, sellerGain, session.platform);\n        }\n        await ctx.database.remove('xiuxian_shop', { id: item.id });\n        return `道友购得【${item.goodsName}】，花费灵石${(0, utils_1.formatAmount)(item.price)}枚！`;\n    });\n",
+    "after": "    ctx.command('xiuxian/坊市购买 <num:integer> [quantity:integer]', '按数量购买坊市物品')\n        .action(async ({ session }, num, quantity) => require('../shop-trade').buyGoods(ctx, srv, config, session, num, quantity));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    ctx.command('xiuxian/坊市上架 <name:string> <price:integer>', '上架背包物品')\n        .action(async ({ session }, name, price) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (!price || price <= 0)\n            return '请输入正确的价格！';\n        const shopItems = await listShop(gid);\n        if (shopItems.length >= config.shopCapacity)\n            return `坊市货架已满（上限${config.shopCapacity}件），请稍后再来！`;\n        const backs = await srv.getBack(userId);\n        const back = backs.find((b) => b.goodsName === name || b.goodsName.includes(name));\n        if (!back || back.goodsNum < 1)\n            return `背包中没有【${name}】！`;\n        if (back.state === 1)\n            return '已装备的物品无法上架！';\n        await srv.reduceBack(userId, back.goodsId, 1, 0);\n        await ctx.database.create('xiuxian_shop', {\n            guildId: gid,\n            sellerId: userId,\n            sellerName: player.userName,\n            goodsId: back.goodsId,\n            goodsName: back.goodsName,\n            goodsType: back.goodsType,\n            price,\n            goodsNum: 1,\n            createTime: new Date(),\n        });\n        return `【${back.goodsName}】已上架坊市，标价${(0, utils_1.formatAmount)(price)}灵石！\\n（若${config.shopExpireHours}小时内无人购买将自动下架退回）`;\n    });\n",
+    "after": "    ctx.command('xiuxian/坊市上架 <name:string> <price:integer> [quantity:integer]', '按单价和数量上架背包物品')\n        .action(async ({ session }, name, price, quantity) => require('../shop-trade').listGoods(ctx, srv, config, session, name, price, quantity));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    ctx.command('xiuxian/坊市下架 <num:integer>', '下架坊市物品')\n        .action(async ({ session }, num) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        const userId = session.userId;\n        const items = await listShop(gid);\n        const item = items.find((i) => i.id === num);\n        if (!item)\n            return '请输入正确的编号！';\n        const isAdmin = config.adminQQ.includes(userId);\n        if (item.sellerId !== userId && item.sellerId !== '0' && !isAdmin) {\n            return '这不是你的上架物品！';\n        }\n        if (item.sellerId !== '0') {\n            await srv.sendBack(item.sellerId, item.goodsId, item.goodsName, item.goodsType, item.goodsNum);\n        }\n        await ctx.database.remove('xiuxian_shop', { id: item.id });\n        return `已下架【${item.goodsName}】！`;\n    });\n",
+    "after": "    ctx.command('xiuxian/坊市下架 <num:integer>', '下架坊市物品')\n        .action(async ({ session }, num) => require('../shop-trade').removeGoods(ctx, srv, config, session, num));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "            if (item.sellerId !== '0') {\n                await srv.sendBack(item.sellerId, item.goodsId, item.goodsName, item.goodsType, item.goodsNum);\n            }\n            await ctx.database.remove('xiuxian_shop', { id: item.id });\n",
+    "after": "            await require('../shop-trade').removeGoods(ctx, srv, config, null, item.id, true);\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "${(0, utils_1.formatAmount)(it.price)}灵石 — 卖家：",
+    "after": "单价${(0, utils_1.formatAmount)(it.price)}灵石，库存${it.goodsNum}个 — 卖家：",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "'4、坊市购买 <编号>：购买物品',",
+    "after": "'4、坊市购买 <编号> [数量]：按单价购买，数量默认1',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "'5、坊市上架 <物品名> <价格>：上架背包物品',",
+    "after": "'5、坊市上架 <物品名> <单价> [数量]：批量上架，数量默认1',",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    (adminCtx ?? ctx).command('xiuxian/系统坊市上架 <name:string> <price:integer>', '【管理】上架任意物品', { authority: helpers_1.ADMIN_AUTHORITY })\n        .action(async ({ session }, name, price) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        if (!price || price <= 0)\n            return '请输入正确的价格！';\n        const shopItems = await listShop(gid);\n        if (shopItems.length >= config.shopCapacity)\n            return `坊市货架已满（上限${config.shopCapacity}件），请稍后再来！`;\n        const found = srv.data.findItemsByName(name);\n        if (!found.length)\n            return `找不到物品【${name}】！`;\n        const [id, info] = found[0];\n        await ctx.database.create('xiuxian_shop', {\n            guildId: gid,\n            sellerId: '0',\n            sellerName: '系统',\n            goodsId: Number(id),\n            goodsName: info.name,\n            goodsType: info.item_type ?? '物品',\n            price,\n            goodsNum: 1,\n            createTime: new Date(),\n        });\n        return `系统已上架【${info.name}】，标价${(0, utils_1.formatAmount)(price)}灵石！`;\n    });",
+    "after": "    (adminCtx ?? ctx).command('xiuxian/系统坊市上架 <name:string> <price:integer> [quantity:integer]', '【管理】上架任意物品', { authority: helpers_1.ADMIN_AUTHORITY })\n        .action(async ({ session }, name, price, quantity = 1) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        if (!Number.isSafeInteger(price) || price <= 0 || price > 2147483647)\n            return '请输入正确的价格！';\n        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647) return '请输入正确的数量（正整数）！';\n        const shopItems = await listShop(gid);\n        if (shopItems.length >= config.shopCapacity)\n            return `坊市货架已满（上限${config.shopCapacity}件），请稍后再来！`;\n        const found = srv.data.findItemsByName(name);\n        if (!found.length)\n            return `找不到物品【${name}】！`;\n        const [id, info] = found[0];\n        await ctx.database.create('xiuxian_shop', {\n            guildId: gid,\n            sellerId: '0',\n            sellerName: '系统',\n            goodsId: Number(id),\n            goodsName: info.name,\n            goodsType: info.item_type ?? '物品',\n            price,\n            goodsNum: quantity,\n            createTime: new Date(),\n        });\n        return `系统已上架【${info.name}】，数量${quantity}个，单价${(0, utils_1.formatAmount)(price)}灵石！`;\n    });",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "'7、系统坊市上架 <物品名> <价格>：管理员上架任意物品',",
+    "after": "'7、系统坊市上架 <物品名> <单价> [数量]：管理员批量上架物品',",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "    /** 按宗门名称加入（用于建号选择与常规加入） */\n    async joinSectByName(userId, sectName) {\n        const player = await this.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (player.sectId)\n            return '道友已有宗门，请先【退出宗门】后再选择！';\n        await this.ensurePresetSects();\n        const preset = (0, preset_sects_1.findPresetSect)(sectName);\n        if (!preset) {\n            const names = preset_sects_1.PRESET_SECTS.map((s) => s.name).join('、');\n            return `未找到宗门【${sectName.trim()}】，请从以下宗门中选择：\\n${names}`;\n        }\n        const sect = await this.getSectByName(preset.name);\n        if (!sect)\n            return '宗门数据异常，请联系管理员。';\n        await this.ctx.database.set('xiuxian_player', { userId }, { sectId: sect.sectId, sectPosition: 4 });\n        return `道友成功加入宗门【${sect.sectName}】，成为外门弟子！\\n${preset.desc}`;\n    }\n",
+    "after": "    /** 全量宗门目录，编号与加入指令一致，不复用前十排行榜。 */\n    async listSects() {\n        await this.ensurePresetSects();\n        return this.ctx.database.get('xiuxian_sect', {}, { sort: { sectId: 'asc' } });\n    }\n    async joinSectById(userId, sectId) {\n        const player = await this.getPlayer(userId);\n        if (!player) return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (player.sectId) return '道友已有宗门，请先【退出宗门】后再选择！';\n        const sect = await this.getSectById(sectId);\n        if (!sect) return '未找到宗门，请发送【宗门列表】查看最新编号。';\n        await this.ctx.database.set('xiuxian_player', { userId }, { sectId: sect.sectId, sectPosition: 4 });\n        const preset = (0, preset_sects_1.findPresetSect)(sect.sectName);\n        return `道友成功加入宗门【${sect.sectName}】，成为外门弟子！${preset ? '\\n' + preset.desc : ''}`;\n    }\n    /** 全名精确匹配，包括玩家创建的宗门。 */\n    async joinSectByName(userId, sectName) {\n        const player = await this.getPlayer(userId);\n        if (!player) return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        if (player.sectId) return '道友已有宗门，请先【退出宗门】后再选择！';\n        await this.ensurePresetSects();\n        const sects = await this.ctx.database.get('xiuxian_sect', { sectName: sectName.trim() });\n        if (!sects.length) return `未找到宗门【${sectName.trim()}】，请发送【宗门列表】查看宗门编号或全名。`;\n        if (sects.length > 1) return '存在同名宗门，请发送【宗门列表】查看编号后，使用【加入宗门 编号】加入。';\n        return this.joinSectById(userId, sects[0].sectId);\n    }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/preset-sects.js",
+    "before": "查看四大宗门并择一而入",
+    "after": "查看全部宗门（含玩家创建的宗门）并择一而入",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "    await session.send((0, preset_sects_1.formatPresetSectList)());",
+    "after": "    const sects = await srv.listSects();\n    const lines = ['可选宗门如下（含玩家创建的宗门），请回复【编号】或【宗门全名】加入：'];\n    for (const sect of sects) {\n        lines.push(`编号${sect.sectId} ${sect.sectName}`);\n        const preset = (0, preset_sects_1.findPresetSect)(sect.sectName);\n        if (preset) lines.push(`   ${preset.desc}`);\n    }\n    await session.send(lines.join('\\n'));",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/base.js",
+    "before": "        const preset = (0, preset_sects_1.resolvePresetSectInput)(raw);\n        if (!preset) {\n            await session.send('未找到对应宗门，请回复【序号】（如 1）或【宗门全名】。');\n            continue;\n        }\n        const result = await srv.joinSectByName(session.userId, preset.name);\n        if (result.startsWith('未找到宗门') || result.includes('数据异常')) {\n            await session.send(`${result}\\n请重新回复序号或宗门全名。`);\n            continue;\n        }\n",
+    "after": "        const numeric = /^\\d+$/.test(raw);\n        const result = numeric\n            ? await srv.joinSectById(session.userId, Number(raw))\n            : await srv.joinSectByName(session.userId, raw);\n        if (result.startsWith('未找到宗门') || result.startsWith('存在同名宗门') || result.includes('数据异常')) {\n            await session.send(`${result}\\n请重新回复编号或宗门全名。`);\n            continue;\n        }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "        const sects = await srv.sectScaleTop();",
+    "after": "        const sects = await srv.listSects();",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/sect.js",
+    "before": "            const sect = await srv.getSectById(sectId);\n            if (!sect)\n                return '没有这个编号的宗门哦！';\n            await ctx.database.set('xiuxian_player', { userId }, { sectId, sectPosition: 4 });\n            return `道友成功加入宗门【${sect.sectName}】，成为外门弟子！`;",
+    "after": "            return srv.joinSectById(userId, sectId);",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        (0, boss_1.applyBoss)(playCtx, config, adminCtx);",
+    "after": "        // 世界BOSS改用按本群难度、按伤害分奖、可定时刷新的新实现；上游 battle-detail 有模块级状态，需注入同一份\n        require(\"./world-boss\").applyWorldBoss(playCtx, adminCtx, { ...require(\"./utils\"), ...require(\"./combat-stats\"), ...require(\"./battle-detail\") });",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "    async wipeAndRemake(userId, platform) {\n        const player = await this.getPlayer(userId);\n        if (!player)\n            return '修仙界没有你的足迹，输入 我要修仙 加入修仙世界吧！';\n        if (!(await this.costStoneForUser(userId, this.config.remakeCost, platform))) {\n            return '你的灵石还不够呢，快去赚点灵石吧！';\n        }\n        const ownedSect = await this.getSectByOwner(userId);\n        if (ownedSect) {\n            return '道友为一宗之主，请先转让宗主之位或解散宗门后再重入仙途！';\n        }\n        await this.wipeUserData(userId);\n        return '逆天改命，前尘尽散！请发送【我要修仙】重新踏入仙路。';\n    }\n",
+    "after": "    async wipeAndRemake(userId, platform) {\n        return require('./sign-in').remakeKeepingSign(this, userId, platform);\n    }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "    async sign(userId, platform) {\n        const player = await this.getPlayer(userId);\n        if (!player)\n            return '修仙界没有你的足迹，输入 我要修仙 加入修仙世界吧！';\n        const today = (0, daily_utils_1.todayStr)();\n        if (player.isSign === 1 && player.lastSignDate === today) {\n            return '今日已签到，请明日0点后再来。';\n        }\n        const { signInLingShiLowerLimit: lo, signInLingShiUpperLimit: hi } = this.config;\n        const stone = Math.floor(Math.random() * (hi - lo + 1)) + lo;\n        await this.ctx.database.set('xiuxian_player', { userId }, { isSign: 1, lastSignDate: today });\n        await this.gainStoneForUser(userId, stone, platform ?? player.platform);\n        return `签到成功，获取${stone}块灵石!`;\n    }\n",
+    "after": "    async sign(userId, platform) {\n        return require('./sign-in').signOnce(this, userId, platform, () => (0, daily_utils_1.todayStr)());\n    }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "        ctx.model.extend('xiuxian_meta', {",
+    "after": "        ctx.model.extend('xiuxian_sign', { userId: 'string', lastSignDate: 'string', token: { type: 'integer', initial: 0 } }, { primary: 'userId' });\n        ctx.model.extend('xiuxian_meta', {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "    function makeWork(level, exp, rebirth) {\n        const workLevel = level === '江湖好手' ? '江湖好手' : level.slice(0, 3);\n        const sources = [srv.data.work.yaocai, srv.data.work.ansha, srv.data.work.zuoyao];\n        const result = [];\n        for (const source of sources) {\n            const pool = source[workLevel];\n            if (!pool)\n                continue;\n            const names = Object.keys(pool);\n            if (!names.length)\n                continue;\n            const name = (0, utils_1.randChoice)(names);\n            const task = pool[name];\n            const priceData = srv.data.work.levelPrice[workLevel]?.[task.level];\n            if (!priceData)\n                continue;\n            const [rate, isOut] = countRate(exp, priceData.needexp);\n            const itemType = (0, utils_1.rouletteSelect)({ 功法: 400, 神通: 400, 药材: 400 });\n            const itemId = srv.data.randomItemIdByRank(srv.data.itemRankByLevel(level), [itemType], (0, utils_1.luckPoints)(rebirth));\n            result.push({\n                name,\n                rate,\n                award: priceData.award,\n                time: Math.floor(priceData.time * isOut),\n                itemId: itemId === 0 ? 0 : Number(itemId),\n                successMsg: task.succeed,\n                failMsg: task.fail,\n            });\n        }\n        return result;\n    }\n",
+    "after": "    function makeWork(level, exp, rebirth) {\n        const workLevel = level === '江湖好手' ? '江湖好手' : level.slice(0, 3);\n        const sources = [srv.data.work.yaocai, srv.data.work.ansha, srv.data.work.zuoyao];\n        const result = [];\n        for (const source of sources) {\n            const pool = source[workLevel];\n            if (!pool)\n                continue;\n            const names = Object.keys(pool);\n            if (!names.length)\n                continue;\n            const name = (0, utils_1.randChoice)(names);\n            const task = pool[name];\n            const priceData = srv.data.work.levelPrice[workLevel]?.[task.level];\n            if (!priceData)\n                continue;\n            const [rate, isOut] = countRate(exp, priceData.needexp);\n            const itemType = (0, utils_1.rouletteSelect)({ 功法: 400, 神通: 400, 药材: 400 });\n            const itemId = srv.data.randomItemIdByRank(srv.data.itemRankByLevel(level), [itemType], (0, utils_1.luckPoints)(rebirth));\n            result.push({\n                name,\n                rate,\n                award: priceData.award,\n                time: Math.floor(priceData.time * isOut),\n                itemId: itemId === 0 ? 0 : Number(itemId),\n                successMsg: task.succeed,\n                failMsg: task.fail,\n            });\n        }\n        return result.length ? result : require(\"../high-work\").makeHighWork(srv.data, level, exp, rebirth, utils_1);\n    }\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "    async function doSettle(userId, reward) {",
+    "after": "    async function doSettle(userId, reward) {\n        return require('../economy').withEconomyTransaction(ctx, srv, userId, async (ctx, srv) => {",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        return msg;\n    }",
+    "after": "        return msg;\n        });\n    }",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "        const bigSuc = active.rate >= 100;",
+    "after": "        if (reward === 'stone' && await srv.getStoneForUser(userId, player.platform) + active.award * 2 > 2147483647) return '钱包容量不足，请使用部分灵石后重试，或发送【悬赏令结算】领取修为。任务未结算。';\n        const bigSuc = active.rate >= 100;",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/work.js",
+    "before": "    ctx.command('xiuxian/悬赏令终止', '终止当前悬赏令（罚没灵石）')\n        .action(async ({ session }) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const [active] = await ctx.database.get('xiuxian_work', { userId });\n        if (!active)\n            return '没有查到你的悬赏令信息呢，请刷新！';\n        await srv.costStoneForUser(userId, ABORT_COST, session.platform);\n        await ctx.database.remove('xiuxian_work', { userId });\n        await srv.setState(userId, 0);\n        return `道友不讲诚信，被打了一顿，灵石减少${ABORT_COST}，悬赏令已终止！`;\n    });\n",
+    "after": "    ctx.command('xiuxian/悬赏令终止', '终止当前悬赏令（罚没灵石）')\n        .action(async ({ session }) => require('../economy').withEconomyTransaction(ctx, srv, session.userId, async (ctx, srv) => {\n        const userId = session.userId;\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const [active] = await ctx.database.get('xiuxian_work', { userId });\n        if (!active)\n            return '没有查到你的悬赏令信息呢，请刷新！';\n        if (!await srv.costStoneForUser(userId, ABORT_COST, session.platform)) return '终止悬赏需要4000000灵石，余额不足，任务继续保留。';\n        await ctx.database.remove('xiuxian_work', { userId });\n        await srv.setState(userId, 0);\n        return `道友不讲诚信，被打了一顿，灵石减少${ABORT_COST}，悬赏令已终止！`;\n    }));\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "    ctx.command('xiuxian/炼制 <num:integer>', '按序号炼制丹药')\n        .action(async ({ session }, num) => {\n        const userId = session.userId;\n        if (!num || num < 1)\n            return '请输入正确的配方序号！';\n        const recipes = pendingRecipes.get(userId);\n        if (!recipes?.length)\n            return '请先发送【炼丹】查看可用配方！';\n        const recipe = recipes[num - 1];\n        if (!recipe)\n            return '没有这个序号的配方，请重新【炼丹】查看列表！';\n        const materials = recipe_list.recipeMaterials(recipe);\n        for (const [goodsId, material] of materials) {\n            const item = await srv.getBackItem(userId, goodsId);\n            if (!item || item.goodsNum < material.num) return '药材不足：' + material.name + ' 需要 ' + material.num + ' 个！请重新【炼丹】刷新配方。';\n        }\n        const mainInfo = srv.data.getItem(recipe.mainId);\n        const yyInfo = srv.data.getItem(recipe.yaoyinId);\n        if ((0, mix_elixir_util_1.tiaohe)(mainInfo, recipe.mainNum, yyInfo, recipe.yaoyinNum)) {\n            return '冷热调和失败！丹炉中灵火暴走，本次炼制未能成丹（药材未消耗）。';\n        }\n        for (const [goodsId, material] of materials) await srv.reduceBack(userId, goodsId, material.num, 0);\n        const elixir = srv.data.getItem(recipe.elixirId);\n        await srv.sendBack(userId, recipe.elixirId, elixir.name, elixir.item_type ?? '合成丹药', 1);\n        return `丹成！消耗${recipe.formulaShort}，炼制出一枚【${recipe.elixirName}】！`;\n    });",
+    "after": "    ctx.command('xiuxian/炼制 <num:integer> [quantity:integer]', '按序号批量炼制丹药')\n        .action(async ({ session }, num, quantity = 1) => {\n        if (!Number.isSafeInteger(num) || num < 1) return '请输入正确的配方序号！';\n        const recipes = pendingRecipes.get(session.userId);\n        if (!recipes?.length) return '请先发送【炼丹】查看可用配方！';\n        const recipe = recipes[num - 1];\n        if (!recipe) return '没有这个序号的配方，请重新【炼丹】查看列表！';\n        return require('../alchemy').craftBatch(ctx, srv, session.userId, recipe, quantity, mix_elixir_util_1.tiaohe);\n    });",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "道友背包内没有炼丹炉，无法炼丹！",
+    "after": "道友背包内没有炼丹炉，无法炼丹！发送【修仙商店】查看购买途径。",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "2、炼制 <序号>：按列表序号炼制丹药（需有炼丹炉）",
+    "after": "2、炼制 <序号> [数量]：每次1～100枚，例如：炼制 1 10（需有炼丹炉）",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        (0, mixelixir_1.applyMixElixir)(playCtx, config);",
+    "after": "        (0, mixelixir_1.applyMixElixir)(playCtx, config);\n        require(\"./player-services\").applyPlayerServices(playCtx, config, require(\"./helpers\").getAtId, require(\"./daily-utils\").todayStr);",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.js",
+    "before": "        hp: Math.max(base.hp, 0),",
+    "after": "        hp: Math.max(real.hp, 0),\n        hpScale: 1 + merged.hpbuff,",
+    "count": 1
+  },
+  {
+    "file": "lib/combat-stats.js",
+    "before": "        mp: base.mp,",
+    "after": "        mp: real.mp,",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "        await this.setHpMp(userId, Math.max(combatHp, 0), player.mp);",
+    "after": "        const merged = (0, skills_1.mergeSkillBuffs)(await this.getLearnedSkills(userId), this.data);\n        const scale = Math.max(1 + merged.hpbuff, 1);\n        await this.setHpMp(userId, Math.ceil(Math.max(combatHp, 0) / scale), player.mp);",
+    "count": 1
+  },
+  {
+    "file": "lib/utils.js",
+    "before": "                defender.defense = Math.min(defender.defense + buffVal, 0.9);",
+    "after": "                attacker.defense = Math.min((attacker.defense ?? 0) + buffVal, 0.9);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "每次1～100枚，例如：炼制 1 10",
+    "after": "每批1～100炉，例如：炼制 1 10；丹炉可加成产量",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    /** 每 3 小时对有坊市记录的群自动补货，并清理过期商品 */\n    ctx.setInterval(async () => {\n        const all = await ctx.database.get('xiuxian_shop', {});\n        const guildIds = [...new Set(all.map((r) => r.guildId))];\n        // 群聊白名单：定时任务仅处理白名单内群（开启时）\n        const wlSet = config.groupWhitelistEnabled\n            ? new Set(config.groupWhitelist.map((g) => (0, helpers_1.normalizePlatformId)(g)).filter(Boolean))\n            : null;\n        const allowedGuilds = wlSet ? new Set(guildIds.filter((g) => wlSet.has((0, helpers_1.normalizePlatformId)(g)))) : null;\n        // 1) 过期商品静默下架（神秘人直接删除，玩家发回背包）\n        const expireMs = config.shopExpireHours * 3600 * 1000;\n        const now = Date.now();\n        const expired = all.filter((r) => {\n            if (now - new Date(r.createTime).getTime() <= expireMs)\n                return false;\n            if (allowedGuilds && !allowedGuilds.has(r.guildId))\n                return false;\n            return true;\n        });\n        for (const item of expired) {\n            await require('../shop-trade').removeGoods(ctx, srv, config, null, item.id, true);\n            ctx.logger('huaji-xiuxian').info('坊市过期下架：群 %s 物品 %s（卖家 %s）', item.guildId, item.goodsName, item.sellerName);\n        }\n        // 2) 补货：仅当坊市全部商品数低于阈值时，神秘人补 1 件\n        for (const guildId of allowedGuilds ? [...allowedGuilds] : guildIds) {\n            const count = (await listShop(guildId)).length;\n            if (count >= config.shopRestockThreshold)\n                continue;\n            if (count >= config.shopCapacity)\n                continue;\n            const pick = (0, utils_1.randChoice)(SHOP_AUTO_ITEMS);\n            const info = srv.data.getItem(pick.id);\n            if (!info)\n                continue;\n            await ctx.database.create('xiuxian_shop', {\n                guildId,\n                sellerId: '0',\n                sellerName: '神秘人',\n                goodsId: pick.id,\n                goodsName: info.name,\n                goodsType: info.item_type ?? '丹药',\n                price: pick.price,\n                goodsNum: 1,\n                createTime: new Date(),\n            });\n            ctx.logger('huaji-xiuxian').info('坊市自动上架：群 %s 物品 %s', guildId, info.name);\n        }\n    }, 3 * 3600 * 1000);\n",
+    "after": "    const market = require(\"../market-stock\").createMarketStock(ctx, srv, config, helpers_1.normalizePlatformId);\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "        const items = await listShop(gid);",
+    "after": "        const marketState = await market.visit(gid);\n        const items = await listShop(gid);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "            return '坊市目前空空如也！';",
+    "after": "            return '坊市目前空空如也！\\n' + market.describe(marketState);",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "        return lines.join('\\n');",
+    "after": "        if (marketState) lines.push(market.describe(marketState));\n        return lines.join('\\n');",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "    (adminCtx ?? ctx).command('xiuxian/系统坊市上架 <name:string> <price:integer> [quantity:integer]', '【管理】上架任意物品', { authority: helpers_1.ADMIN_AUTHORITY })\n        .action(async ({ session }, name, price, quantity = 1) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        if (!Number.isSafeInteger(price) || price <= 0 || price > 2147483647)\n            return '请输入正确的价格！';\n        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647) return '请输入正确的数量（正整数）！';\n        const shopItems = await listShop(gid);\n        if (shopItems.length >= config.shopCapacity)\n            return `坊市货架已满（上限${config.shopCapacity}件），请稍后再来！`;\n        const found = srv.data.findItemsByName(name);\n        if (!found.length)\n            return `找不到物品【${name}】！`;\n        const [id, info] = found[0];\n        await ctx.database.create('xiuxian_shop', {\n            guildId: gid,\n            sellerId: '0',\n            sellerName: '系统',\n            goodsId: Number(id),\n            goodsName: info.name,\n            goodsType: info.item_type ?? '物品',\n            price,\n            goodsNum: quantity,\n            createTime: new Date(),\n        });\n        return `系统已上架【${info.name}】，数量${quantity}个，单价${(0, utils_1.formatAmount)(price)}灵石！`;\n    });",
+    "after": "    (adminCtx ?? ctx).command('xiuxian/系统坊市上架 <name:string> <price:integer> [quantity:integer]', '【管理】上架任意物品', { authority: helpers_1.ADMIN_AUTHORITY })\n        .action(async ({ session }, name, price, quantity = 1) => {\n        const gid = guildOf(session);\n        if (!gid)\n            return '坊市仅在群聊中使用！';\n        if (!Number.isSafeInteger(price) || price <= 0 || price > 2147483647)\n            return '请输入正确的价格！';\n        if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647) return '请输入正确的数量（正整数）！';\n        return require('../market-lock').withMarketTransaction(ctx, gid, async (ctx) => {\n        const shopItems = await ctx.database.get('xiuxian_shop', { guildId: gid });\n        if (shopItems.length >= config.shopCapacity)\n            return `坊市货架已满（上限${config.shopCapacity}件），请稍后再来！`;\n        const found = srv.data.findItemsByName(name);\n        if (!found.length)\n            return `找不到物品【${name}】！`;\n        const [id, info] = found[0];\n        await ctx.database.create('xiuxian_shop', {\n            guildId: gid,\n            sellerId: '0',\n            sellerName: '系统',\n            goodsId: Number(id),\n            goodsName: info.name,\n            goodsType: info.item_type ?? '物品',\n            price,\n            goodsNum: quantity,\n            createTime: new Date(),\n        });\n        return `系统已上架【${info.name}】，数量${quantity}个，单价${(0, utils_1.formatAmount)(price)}灵石！`;\n        });\n    });",
+    "count": 1
+  },
+  {
+    "file": "lib/config.js",
+    "before": "神秘人补货阈值：坊市全部商品数低于该值时，神秘人才会自动上架补货。",
+    "after": "神秘人每批货架数：每3小时换批，最多5类；0关闭补货，不超过坊市总容量。",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "        for (const it of items) {\n",
+    "after": "        for (const it of items) {\n            const info = srv.data.getItem(it.goodsId);\n            const grade = info?.level || (info && srv.data.formatItemRealmRequirement?.(info)) || '';\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/shop.js",
+    "before": "${it.goodsName}（${it.goodsType}）单价",
+    "after": "${it.goodsName}（${it.goodsType}）${grade ? '【' + grade + '】' : ''}单价",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        // 长文本转图中间件：playCtx 与 adminCtx 均需覆盖\n        const longTextMw = async (_session, next) => {\n            const result = await next();\n            if (typeof result === 'string') {\n                return (0, message_reply_1.formatLongTextReply)(root, config, result);\n            }\n            return result;\n        };\n        playCtx.middleware(longTextMw, true);\n        adminCtx.middleware(longTextMw, true);\n",
+    "after": "        require(\"./reply-display\").applyReplyDisplay(root, config, { commandContext: playCtx });\n",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "    optional: ['markdownToImage'],",
+    "after": "    optional: ['markdownToImage', 'wechatRender', 'assets'],",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        require(\"./reply-display\").applyReplyDisplay(root, config, { commandContext: playCtx });",
+    "after": "        require(\"./endless-tower\").applyEndlessTower(playCtx, { ...require(\"./utils\"), ...require(\"./combat-stats\"), ...require(\"./skills\") });\n        require(\"./reply-display\").applyReplyDisplay(root, config, { commandContext: playCtx });",
+    "count": 1
+  },
+  {
+    "file": "lib/index.js",
+    "before": "        '— 长线玩法：参悟天机 / 飞升转世 / 我的转世 / 宗门贡献兑换',",
+    "after": "        '— 试炼爬塔：无尽塔 / 连闯无尽塔 10',\n        '— 长线玩法：参悟天机 / 飞升转世 / 我的转世 / 宗门贡献兑换',",
+    "count": 1
+  },
+  {
+    "file": "lib/mix-elixir-util.js",
+    "before": "function findMixRecipes(yaocaiList, mixElixirItems) {\n    const mixConfigs = buildMixConfigs(mixElixirItems);\n    const recipes = [];\n    const seen = new Set();\n    for (const main of yaocaiList) {\n        for (let i = 1; i <= Math.min(main.num, MAX_HERBS_PER_ROLE); i++) {\n            for (const yy of yaocaiList) {\n                if (yy.id === main.id)\n                    continue;\n                for (let o = 1; o <= Math.min(yy.num, MAX_HERBS_PER_ROLE); o++) {\n                    if (tiaohe(main.info, i, yy.info, o))\n                        continue;\n                    for (const fy of yaocaiList) {\n                        for (let p = 1; p <= Math.min(fy.num, MAX_HERBS_PER_ROLE); p++) {\n                            if (i + o + p > MAX_TOTAL_HERBS)\n                                continue;\n                            const mainType = main.info['主药'];\n                            const fyType = fy.info['辅药'];\n                            const elixirConfig = {\n                                [String(mainType?.type ?? 2)]: num(mainType?.power) * i,\n                                [String(fyType?.type ?? 3)]: num(fyType?.power) * p,\n                            };\n                            const elixirId = checkMix(elixirConfig, mixConfigs);\n                            if (!elixirId)\n                                continue;\n                            const key = `${elixirId}:${main.id}:${i}:${yy.id}:${o}:${fy.id}:${p}`;\n                            if (seen.has(key))\n                                continue;\n                            seen.add(key);\n                            const elixirInfo = mixElixirItems[String(elixirId)];\n                            if (!elixirInfo)\n                                continue;\n                            recipes.push({\n                                elixirId,\n                                elixirName: elixirInfo.name,\n                                desc: elixirInfo.desc ?? '',\n                                mainId: main.id,\n                                mainName: main.info.name,\n                                mainNum: i,\n                                mainLevel: main.info.level ?? '',\n                                yaoyinId: yy.id,\n                                yaoyinName: yy.info.name,\n                                yaoyinNum: o,\n                                yaoyinLevel: yy.info.level ?? '',\n                                fuyaoId: fy.id,\n                                fuyaoName: fy.info.name,\n                                fuyaoNum: p,\n                                fuyaoLevel: fy.info.level ?? '',\n                                formulaShort: `主药${main.info.name}${i}药引${yy.info.name}${o}辅药${fy.info.name}${p}`,\n                                elixirConfig,\n                            });\n                        }\n                    }\n                }\n            }\n        }\n    }\n    return require(\"./mix-recipe-list\").selectMixRecipes(recipes, yaocaiList);\n}\n",
+    "after": "function findMixRecipes(yaocaiList, mixElixirItems) {\n    return require(\"./mix-recipe-search\").findBestMixRecipes(yaocaiList, mixElixirItems);\n}\n",
+    "count": 1
+  },
+  {
+    "file": "lib/modules/mixelixir.js",
+    "before": "\"use strict\";\nObject.defineProperty(exports, \"__esModule\", { value: true });\nexports.applyMixElixir = applyMixElixir;\nconst mix_elixir_util_1 = require(\"../mix-elixir-util\");\nconst recipe_list = require(\"../mix-recipe-list\");\n/** 用户上次炼丹查询到的配方列表 */\nconst pendingRecipes = new Map();\n/** 炼丹模块（对照 nonebot xiuxian_mixelixir） */\nfunction applyMixElixir(ctx, _config) {\n    const srv = ctx.xiuxian;\n    ctx.command('xiuxian/炼丹帮助', '炼丹系统帮助')\n        .action(() => [\n        '炼丹帮助信息:',\n        '1、炼丹 [页码]：按丹药去重，每种推荐一个最省药材的配方；例如：炼丹 2',\n        '2、炼制 <序号> [数量]：每批1～100炉，例如：炼制 1 10；丹炉可加成产量（需有炼丹炉）',\n        '3、炼丹配方帮助：主药+药引需冷热调和，辅药决定丹药类型',\n    ].join('\\n'));\n    ctx.command('xiuxian/炼丹配方帮助', '炼丹配方说明')\n        .action(() => [\n        '炼丹配方信息:',\n        '1、炼丹需要主药、药引、辅药，并持有炼丹炉',\n        '2、主药和药引控制冷热调和，失和则无法成丹',\n        '3、辅药类型与数量决定产出何种合成丹药',\n    ].join('\\n'));\n    ctx.command('xiuxian/炼丹 [page:integer]', '扫描背包并分页列出可炼制丹方')\n        .action(async ({ session }, page = 1) => {\n        const userId = session.userId;\n        if (!Number.isSafeInteger(page) || page < 1) return '请输入正确的页码，例如：炼丹 1';\n        if (page > 1 && pendingRecipes.has(userId)) return recipe_list.renderMixRecipePage(pendingRecipes.get(userId), page);\n        pendingRecipes.delete(userId);\n        const player = await srv.getPlayer(userId);\n        if (!player)\n            return '修仙界没有道友的信息，请输入【我要修仙】加入！';\n        const backs = await srv.getBack(userId);\n        const hasLdl = backs.some((b) => {\n            const t = b.goodsType;\n            const info = srv.data.getItem(b.goodsId);\n            return t === '炼丹炉' || info?.item_type === '炼丹炉';\n        });\n        if (!hasLdl)\n            return '道友背包内没有炼丹炉，无法炼丹！发送【修仙商店】查看购买途径。';\n        const yaocaiList = [];\n        for (const b of backs) {\n            const info = srv.data.getItem(b.goodsId);\n            if (!info || info.item_type !== '药材')\n                continue;\n            yaocaiList.push({ id: b.goodsId, info, num: b.goodsNum });\n        }\n        if (!yaocaiList.length)\n            return '道友背包内没有药材，无法炼丹！';\n        const mixItems = srv.data.getItemsByType(['合成丹药']);\n        const recipes = (0, mix_elixir_util_1.findMixRecipes)(yaocaiList, mixItems);\n        if (!recipes.length)\n            return '系统未检测到可用丹方，道友背包内的药材不满足配方或冷热失和！';\n        pendingRecipes.set(userId, recipes);\n        return recipe_list.renderMixRecipePage(recipes, page);\n    });\n    ctx.command('xiuxian/炼制 <num:integer> [quantity:integer]', '按序号批量炼制丹药')\n        .action(async ({ session }, num, quantity = 1) => {\n        if (!Number.isSafeInteger(num) || num < 1) return '请输入正确的配方序号！';\n        const recipes = pendingRecipes.get(session.userId);\n        if (!recipes?.length) return '请先发送【炼丹】查看可用配方！';\n        const recipe = recipes[num - 1];\n        if (!recipe) return '没有这个序号的配方，请重新【炼丹】查看列表！';\n        return require('../alchemy').craftBatch(ctx, srv, session.userId, recipe, quantity, mix_elixir_util_1.tiaohe);\n    });\n}\n//# sourceMappingURL=mixelixir.js.map",
+    "after": "\"use strict\";\nexports.applyMixElixir = (ctx, config) => require(\"../alchemy-commands\").applyAlchemy(ctx, config);\n",
+    "count": 1
+  },
+  {
+    "file": "lib/service.js",
+    "before": "    async getBuff(userId) {\n        const [buff] = await this.ctx.database.get('xiuxian_buff', { userId });\n        if (buff)\n            return buff;\n        return this.ctx.database.create('xiuxian_buff', { userId });\n    }",
+    "after": "    async getBuff(userId) {\n        const [buff] = await this.ctx.database.get('xiuxian_buff', { userId });\n        if (buff)\n            return buff;\n        // 并发首次出手可能同时缺少buff行；仅插入主键，不能覆盖已有装备与功法。\n        await this.ctx.database.upsert('xiuxian_buff', [{ userId }]);\n        return (await this.ctx.database.get('xiuxian_buff', { userId }))[0];\n    }",
+    "count": 1
+  }
+]

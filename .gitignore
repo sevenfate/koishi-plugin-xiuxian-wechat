@@ -1,0 +1,14 @@
+node_modules/
+lib/
+data/
+.cache/
+dist/
+coverage/
+*.tgz
+*.log
+*.tsbuildinfo
+.env
+.env.*
+*.db
+*.sqlite
+.DS_Store
