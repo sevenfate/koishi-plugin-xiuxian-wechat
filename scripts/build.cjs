@@ -17,9 +17,10 @@ async function main() {
     await fs.writeFile(archive, bytes)
   }
   if ('sha512-' + crypto.createHash('sha512').update(bytes).digest('base64') !== upstream.integrity) throw new Error('上游包完整性不一致')
-  const listing = spawnSync('tar', ['-tf', archive], { encoding: 'utf8', windowsHide: true })
+  // GNU tar 会把 Windows 的 C:/... 误判成远程主机路径，统一在缓存目录使用相对归档名。
+  const listing = spawnSync('tar', ['-tf', path.basename(archive)], { cwd: cache, encoding: 'utf8', windowsHide: true })
   if (listing.status !== 0 || listing.stdout.trim().split(/\r?\n/).some(p => !p.startsWith('package/') || p.split('/').includes('..'))) throw new Error('上游包文件路径校验失败')
-  const extracted = spawnSync('tar', ['-xf', archive, '-C', cache], { windowsHide: true })
+  const extracted = spawnSync('tar', ['-xf', path.basename(archive)], { cwd: cache, windowsHide: true })
   if (extracted.status !== 0) throw new Error('上游包解包失败')
   // 只清理本项目的生成目录，避免重建时残留旧代码或上游历史数据库。
   for (const directory of ['lib', 'data']) {
